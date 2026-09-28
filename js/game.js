@@ -17,4 +17,4 @@ B.addEventListener("pointerup",e=>{
  down=-1;
 });
 B.addEventListener("pointercancel",()=>{down=-1});
-B.addEventListener("touchmove",e=>{if(down>=0)e.preventDefault()},{passive:false});$("#restart").onclick=reset;$("#again").onclick=reset;$("#pause").onclick=()=>$("#hint").textContent="训练模式：Boss 不会死亡，18步后统计伤害。";reset()})();
+B.addEventListener("touchmove",e=>{if(down>=0)e.preventDefault()},{passive:false});$("#restart").onclick=reset;$("#again").onclick=reset;reset()})();
