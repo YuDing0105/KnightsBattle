@@ -30,3 +30,10 @@
  .boss:after{inset:-18px -22px -8px -18px!important}
  .stats>div{padding:5px 7px!important}
 }
+
+/* V20 title + endless damage-test HUD */
+header{display:flex!important;justify-content:center!important;align-items:center!important;margin-bottom:6px!important;min-height:58px}
+.logo,.chapter{display:none!important}
+.title-logo{display:block;width:min(72%,360px);max-height:92px;object-fit:contain;filter:drop-shadow(0 4px 3px #0008)}
+.stats{grid-template-columns:repeat(2,1fr)!important}
+@media(max-width:430px){header{min-height:48px!important}.title-logo{width:78%!important;max-height:74px!important}}
