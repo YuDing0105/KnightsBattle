@@ -3,3 +3,9 @@
 .tile{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;overflow:visible}
 .unit{border:0!important;background:transparent!important;box-shadow:none!important;padding:0 0 8px!important;overflow:visible!important}
 .unit .icon{background:transparent!important;border:0!important;box-shadow:none!important}
+
+/* V17: unit HUD shows complete artwork only */
+.units .xp{display:none!important}
+.units .icon{overflow:visible!important;height:72px!important}
+.units .icon img{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;transform:none!important}
+@media(max-width:430px){.units .icon{height:58px!important}.units .icon img{object-fit:contain!important;transform:none!important}}
