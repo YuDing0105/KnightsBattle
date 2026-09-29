@@ -49,3 +49,10 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 #animButtons{display:flex;flex-wrap:wrap;gap:4px}
 #animButtons button{padding:5px 7px;border:1px solid #81633f;border-radius:6px;background:#302820;color:#eee;font-size:9px}
 #animButtons button.active{background:#9b6528;color:#fff;border-color:#ffd06b}
+
+/* V24 highly visible animation debug panel */
+.anim-debug{display:block!important;position:relative!important;z-index:50!important;margin:0!important;padding:10px!important;background:#5b1c16!important;border:3px solid #ffd15a!important;color:#fff!important;min-height:58px!important}
+.anim-debug>b{display:block!important;font-size:12px!important;color:#ffd15a!important;margin-bottom:6px!important}
+#animStatus{display:block;font-size:10px;margin-bottom:6px;color:#fff}
+#animButtons{display:flex!important;flex-wrap:wrap!important;gap:5px!important}
+#animButtons button{display:block!important;min-height:32px!important;padding:5px 7px!important;background:#231c18!important;color:#fff!important;border:2px solid #d4a34e!important;border-radius:6px!important;font-size:9px!important}
