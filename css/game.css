@@ -72,3 +72,6 @@ header{display:flex!important;justify-content:center!important;align-items:cente
  .units .unit:first-child{width:200%!important;height:200%!important}
  .units .unit:first-child .icon{width:100%!important;height:152px!important;min-height:152px!important;transform:none!important}
 }
+
+/* V33: keep V32 viewport unchanged; shift whole swordsman section slightly left */
+.units .unit:first-child{transform:translateX(-10%)!important}
