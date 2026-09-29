@@ -235,3 +235,6 @@ header{display:flex!important;justify-content:center!important;align-items:cente
  background-size:20px 20px;
  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
 }
+
+/* V44 iPhone swordsman calibration: 3 grid cells (60px) left */
+@media(max-width:430px){.units .unit:first-child{left:-8px!important}}
