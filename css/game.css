@@ -81,3 +81,9 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 .units .unit:first-child .icon{z-index:999!important;overflow:visible!important}
 .swordsman3d,.swordsman3d canvas{position:relative!important;z-index:999!important;overflow:visible!important}
 .arena,.units{overflow:visible!important}
+
+/* V35 full-model visibility + far-left placement */
+.battle,.arena,.units,.unit,.icon,.swordsman3d{overflow:visible!important}
+.units .unit:first-child{transform:translateX(-48%)!important;z-index:9999!important}
+.units .unit:first-child .icon{overflow:visible!important}
+.swordsman3d canvas{z-index:9999!important;overflow:visible!important}
