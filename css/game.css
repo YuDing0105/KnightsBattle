@@ -174,3 +174,10 @@ header{display:flex!important;justify-content:center!important;align-items:cente
  .units .unit:first-child{left:70px!important;top:22px!important;width:165px!important;height:150px!important}
  .units .unit:first-child .icon,.swordsman3d,.swordsman3d canvas{width:165px!important;height:150px!important;min-height:150px!important}
 }
+
+/* V40: expand upper battle area another 10%; all other elements unchanged */
+.arena{height:200px!important;min-height:200px!important;max-height:200px!important}
+.units{height:200px!important;min-height:200px!important;max-height:200px!important}
+@media(max-width:430px){
+ .arena,.units{height:165px!important;min-height:165px!important;max-height:165px!important}
+}
