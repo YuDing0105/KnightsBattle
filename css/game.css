@@ -75,3 +75,9 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 
 /* V33: keep V32 viewport unchanged; shift whole swordsman section slightly left */
 .units .unit:first-child{transform:translateX(-10%)!important}
+
+/* V34: swordsman foreground and center alignment */
+.units .unit:first-child{z-index:999!important;transform:translateX(0)!important;pointer-events:none}
+.units .unit:first-child .icon{z-index:999!important;overflow:visible!important}
+.swordsman3d,.swordsman3d canvas{position:relative!important;z-index:999!important;overflow:visible!important}
+.arena,.units{overflow:visible!important}
