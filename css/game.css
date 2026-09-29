@@ -181,3 +181,23 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 @media(max-width:430px){
  .arena,.units{height:165px!important;min-height:165px!important;max-height:165px!important}
 }
+
+/* V41 responsive swordsman placement: preserve desktop composition on iPhone 15 */
+.units .unit:first-child{
+ left:clamp(54px,12.3vw,86px)!important;
+ top:28px!important;
+ width:209px!important;
+ height:180px!important;
+}
+@media(max-width:430px){
+ .arena,.units{height:165px!important;min-height:165px!important;max-height:165px!important}
+ .units .unit:first-child{
+   left:clamp(44px,12.3vw,53px)!important;
+   top:23px!important;
+   width:209px!important;
+   height:180px!important;
+ }
+ .units .unit:first-child .icon,.swordsman3d,.swordsman3d canvas{
+   width:209px!important;height:180px!important;min-height:180px!important
+ }
+}
