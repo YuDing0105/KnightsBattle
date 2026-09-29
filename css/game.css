@@ -87,3 +87,27 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 .units .unit:first-child{transform:translateX(-48%)!important;z-index:9999!important}
 .units .unit:first-child .icon{overflow:visible!important}
 .swordsman3d canvas{z-index:9999!important;overflow:visible!important}
+
+/* V36: enlarge entire swordsman section 50%, keep full render range, move right one body width */
+.units .unit:first-child{
+  width:300%!important;
+  height:300%!important;
+  transform:translateX(52%)!important;
+  transform-origin:center center!important;
+  z-index:9999!important;
+}
+.units .unit:first-child .icon{
+  width:100%!important;
+  height:276px!important;
+  min-height:276px!important;
+  overflow:visible!important;
+}
+.swordsman3d,.swordsman3d canvas{
+  width:100%!important;
+  height:100%!important;
+  overflow:visible!important;
+}
+@media(max-width:430px){
+ .units .unit:first-child{width:300%!important;height:300%!important;transform:translateX(52%)!important}
+ .units .unit:first-child .icon{height:228px!important;min-height:228px!important}
+}
