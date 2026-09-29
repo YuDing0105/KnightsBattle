@@ -37,3 +37,8 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 .title-logo{display:block;width:min(72%,360px);max-height:92px;object-fit:contain;filter:drop-shadow(0 4px 3px #0008)}
 .stats{grid-template-columns:repeat(2,1fr)!important}
 @media(max-width:430px){header{min-height:48px!important}.title-logo{width:78%!important;max-height:74px!important}}
+
+/* V21 3D swordsman viewport */
+.units .unit:first-child .icon{height:92px!important;min-height:92px!important;overflow:visible!important}
+.swordsman3d canvas{display:block;width:100%!important;height:100%!important;pointer-events:none}
+@media(max-width:430px){.units .unit:first-child .icon{height:76px!important;min-height:76px!important}}
