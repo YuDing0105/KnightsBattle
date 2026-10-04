@@ -1,43 +1,36 @@
 import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 (()=>{"use strict";const names=["剑盾","弓箭","骑兵","斧兵"],pre=["swordsman","archer","cavalry","axe"],N=6,$=s=>document.querySelector(s),B=$("#board");let sword3D=null,swordMixer=null,swordIdle=null,swordAttack=null,swordClock=new THREE.Clock(),swordReady=false,swordAttacking=false,swordAttackQueued=false,weapon3D=null,shield3D=null;let G=[],total=0,best=0,Q=-1,busy=0,U=[],down=-1;const rnd=()=>Math.floor(Math.random()*4),id=(r,c)=>r*N+c,row=i=>Math.floor(i/N),col=i=>i%N,near=(a,b)=>Math.abs(row(a)-row(b))+Math.abs(col(a)-col(b))===1,wait=n=>new Promise(r=>setTimeout(r,n)),need=l=>5,icon=(t,l)=>pre[t]+"_lv"+l+".png";function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupSwordsman3D(){
- const host=document.querySelector("#swordsman3d"); if(!host||host.dataset.three)return;
+ const host=document.querySelector("#swordsman3d");if(!host||host.dataset.three)return;
  host.dataset.three="1";host.innerHTML="";host.classList.add("swordsman3d");
- const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,1,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true});
- ren.setPixelRatio(Math.min(devicePixelRatio,2));const syncSize=()=>{const w=host.clientWidth||209,h=host.clientHeight||180;cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};syncSize();window.addEventListener("resize",syncSize);ren.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(ren.domElement);
- scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));let dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
- cam.position.set(4.8,1.05,5.4);cam.lookAt(0,1.05,0);
- new GLTFLoader().load("swordsman_lv1.glb?v=53",g=>{sword3D=g.scene;scene.add(sword3D);let box=new THREE.Box3().setFromObject(sword3D),sz=box.getSize(new THREE.Vector3()),ctr=box.getCenter(new THREE.Vector3());sword3D.position.set(-ctr.x,-box.min.y,-ctr.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(sz.y,.01));const fitBox=new THREE.Box3().setFromObject(sword3D),fitSize=fitBox.getSize(new THREE.Vector3()),fitCenter=fitBox.getCenter(new THREE.Vector3());sword3D.position.x-=fitCenter.x;sword3D.position.y-=fitBox.min.y;const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(fitSize.y*.62)/Math.tan(vfov/2);cam.position.set(dist*.72,fitSize.y*.52,dist);cam.lookAt(0,fitSize.y*.52,0);swordMixer=new THREE.AnimationMixer(sword3D);let clips=g.animations||[];window.KB_SWORDSMAN_ANIMATIONS=clips.map(a=>a.name);console.info("KB Swordsman animations:",window.KB_SWORDSMAN_ANIMATIONS);
-const idleClips=clips.filter(a=>/idle/i.test(a.name));swordIdle=clips.find(a=>/combat[ _-]*stance/i.test(a.name))||idleClips[0]||null;swordAttack=clips.find(a=>/attack|slash|sword|strike|melee|swing/i.test(a.name))||null;
-const panel=document.querySelector("#animButtons"),status=document.querySelector("#animStatus");if(status)status.textContent="已读取 "+clips.length+" 个动画";if(panel){panel.innerHTML="";clips.forEach((clip,i)=>{let b=document.createElement("button");b.style.cssText="min-height:34px;padding:5px 8px;background:#211b18;color:white;border:2px solid #d5a44d;border-radius:6px;";b.type="button";b.textContent=(i+1)+" · "+clip.name+" · "+clip.duration.toFixed(2)+"s";b.onclick=()=>{swordMixer.stopAllAction();let a=swordMixer.clipAction(clip);a.reset();if(/idle/i.test(clip.name))a.setLoop(THREE.LoopRepeat,Infinity);else{a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true}a.play();document.querySelectorAll("#animButtons button").forEach(x=>x.classList.remove("active"));b.classList.add("active")};panel.appendChild(b)})}
-if(swordIdle)swordMixer.clipAction(swordIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();swordReady=true;
-const handCandidates=[];sword3D.traverse(o=>{if(o.isBone&&/(right.*hand|hand.*r|r[_ .-]?hand|mixamorigRightHand)/i.test(o.name))handCandidates.push(o)});
-const rightHand=handCandidates[0]||null;
-const leftCandidates=[];sword3D.traverse(o=>{if(o.isBone&&/(left.*hand|hand.*l|l[_ .-]?hand|mixamorigLeftHand)/i.test(o.name))leftCandidates.push(o)});
-const leftHand=leftCandidates[0]||null;
-new GLTFLoader().load("sword_lv1.glb?v=53",wg=>{
- weapon3D=wg.scene;
- let wb=new THREE.Box3().setFromObject(weapon3D),wsz=wb.getSize(new THREE.Vector3()),wctr=wb.getCenter(new THREE.Vector3());
- const charBox=new THREE.Box3().setFromObject(sword3D),charSize=charBox.getSize(new THREE.Vector3());
- const longAxis=Math.max(wsz.x,wsz.y,wsz.z),target=charSize.y*.21,ws=target/Math.max(longAxis,.001);
- weapon3D.scale.setScalar(ws);
- weapon3D.position.set(-wctr.x*ws,-wb.min.y*ws,-wctr.z*ws);
- weapon3D.rotation.set(0,0,0);
- if(rightHand){rightHand.add(weapon3D);console.info("KB sword attached to",rightHand.name)}
- else{sword3D.add(weapon3D);weapon3D.position.set(.35*charSize.x,.48*charSize.y,.08*charSize.z);weapon3D.rotation.z=-.25;console.warn("KB right hand bone not found; sword fallback attached to character")}
-},undefined,e=>console.error("KB sword load failed",e));
-new GLTFLoader().load("shield_lv1.glb?v=53",sg=>{
- shield3D=sg.scene;
- let sb=new THREE.Box3().setFromObject(shield3D),ssz=sb.getSize(new THREE.Vector3()),sctr=sb.getCenter(new THREE.Vector3());
- const charBox=new THREE.Box3().setFromObject(sword3D),charSize=charBox.getSize(new THREE.Vector3());
- const longAxis=Math.max(ssz.x,ssz.y,ssz.z),target=charSize.y*.21,sc=target/Math.max(longAxis,.001);
- shield3D.scale.setScalar(sc);
- shield3D.position.set(-sctr.x*sc,-sctr.y*sc,-sb.min.z*sc);
- shield3D.rotation.set(0,Math.PI/2,0);
- if(leftHand){leftHand.add(shield3D);console.info("KB shield attached to",leftHand.name)}
- else{sword3D.add(shield3D);shield3D.position.set(-.35*charSize.x,.48*charSize.y,.12*charSize.z);console.warn("KB left hand bone not found; shield fallback attached to character")}
-},undefined,e=>console.error("KB shield load failed",e));
-});
- function loop(){requestAnimationFrame(loop);let d=swordClock.getDelta();if(swordMixer)swordMixer.update(d);ren.render(scene,cam)}loop();
+ const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true});
+ ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));ren.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(ren.domElement);
+ const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
+ new GLTFLoader().load("swordsman_lv1.glb?v=54",g=>{
+  sword3D=g.scene;scene.add(sword3D);
+  const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
+  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(rawSize.y,.001));
+  const fit=new THREE.Box3().setFromObject(sword3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());
+  sword3D.position.x-=center.x;sword3D.position.y-=fit.min.y;
+  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
+  swordMixer=new THREE.AnimationMixer(sword3D);const clips=g.animations||[],idleClips=clips.filter(a=>/idle/i.test(a.name));
+  swordIdle=clips.find(a=>/combat[ _-]*stance/i.test(a.name))||idleClips[0]||null;swordAttack=clips.find(a=>/attack|slash|sword|strike|melee|swing/i.test(a.name))||null;
+  if(swordIdle)swordMixer.clipAction(swordIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();swordReady=true;
+  const bones=[];sword3D.traverse(o=>{if(o.isBone)bones.push(o)});
+  const rightHand=bones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
+  const leftHand=bones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
+  const attach=(url,hand,kind)=>{
+   new GLTFLoader().load(url,obj=>{
+    const model=obj.scene,b=new THREE.Box3().setFromObject(model),s=b.getSize(new THREE.Vector3()),ctr=b.getCenter(new THREE.Vector3()),axis=Math.max(s.x,s.y,s.z),scale=(size.y*.21)/Math.max(axis,.001);
+    model.scale.setScalar(scale);model.position.set(-ctr.x*scale,-ctr.y*scale,-ctr.z*scale);
+    if(kind==="shield")model.rotation.set(0,Math.PI/2,0);
+    if(hand)hand.add(model);else{sword3D.add(model);model.position.set(kind==="sword"?.3*size.x:-.3*size.x,.48*size.y,.08*size.z)}
+    if(kind==="sword")weapon3D=model;else shield3D=model;
+   },undefined,e=>console.error("KB "+kind+" load failed",e));
+  };
+  attach("sword_lv1.glb?v=54",rightHand,"sword");attach("shield_lv1.glb?v=54",leftHand,"shield");
+ },undefined,e=>{console.error("KB swordsman load failed",e);host.innerHTML='<div style="color:#ffcc66;font-size:10px">3D model load error</div>'});
+ function loop(){requestAnimationFrame(loop);if(swordMixer)swordMixer.update(Math.min(swordClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
 function playSwordAttack(){
  if(!swordReady||!swordMixer||!swordAttack)return;
