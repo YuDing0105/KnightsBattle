@@ -23,6 +23,7 @@ new GLTFLoader().load("sword_lv1.glb?v=50",wg=>{
  if(rightHand){rightHand.add(weapon3D);console.info("KB sword attached to",rightHand.name)}
  else{sword3D.add(weapon3D);weapon3D.position.set(.35*charSize.x,.48*charSize.y,.08*charSize.z);weapon3D.rotation.z=-.25;console.warn("KB right hand bone not found; sword fallback attached to character")}
 },undefined,e=>console.error("KB sword load failed",e));
+});
  function loop(){requestAnimationFrame(loop);let d=swordClock.getDelta();if(swordMixer)swordMixer.update(d);ren.render(scene,cam)}loop();
 }
 function playSwordAttack(){
