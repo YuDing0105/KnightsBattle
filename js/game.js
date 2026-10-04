@@ -6,7 +6,7 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));ren.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(ren.domElement);
  const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
  scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
- makeLoader().load("./swordsman_lv1.glb?v=59",g=>{
+ makeLoader().load("./swordsman_lv1.glb?v=60",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
   sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(rawSize.y,.001));
@@ -22,14 +22,14 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
   const attach=(url,hand,kind)=>{
    makeLoader().load(url,obj=>{
     const model=obj.scene,raw=new THREE.Box3().setFromObject(model),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3()),axis=Math.max(rawSize.x,rawSize.y,rawSize.z);
-    const targetWorld=size.y*(kind==="shield"?.273:.42),desiredWorldScale=targetWorld/Math.max(axis,.001);
+    const targetWorld=size.y*(kind==="shield"?.273:.315),desiredWorldScale=targetWorld/Math.max(axis,.001);
     if(hand){
       const handWorldScale=new THREE.Vector3();hand.getWorldScale(handWorldScale);
       model.scale.set(desiredWorldScale/Math.max(handWorldScale.x,.001),desiredWorldScale/Math.max(handWorldScale.y,.001),desiredWorldScale/Math.max(handWorldScale.z,.001));
       hand.add(model);
       model.position.set(0,0,0);
       if(kind==="sword"){model.position.set(0,.06*size.y,0);model.rotation.set(0,0,0)}
-      else{model.rotation.set(0,Math.PI/2,0);model.position.z+=5/Math.max(handWorldScale.z,.001)}
+      else model.rotation.set(0,Math.PI/2,0);
     }else{
       model.scale.setScalar(desiredWorldScale);sword3D.add(model);
       model.position.set(kind==="sword"?.3*size.x:-.3*size.x,.48*size.y,.08*size.z);
@@ -40,7 +40,7 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
     console.info("KB "+kind+" loaded",hand?("attached to "+hand.name):"fallback");
    },undefined,e=>console.error("KB "+kind+" load failed",e));
   };
-  attach("./sword_lv1.glb?v=59",rightHand,"sword");attach("./shield_lv1.glb?v=59",leftHand,"shield");
+  attach("./sword_lv1.glb?v=60",rightHand,"sword");attach("./shield_lv1.glb?v=60",leftHand,"shield");
  },undefined,e=>{console.error("KB swordsman load failed",e);host.innerHTML='<div style="color:#ffcc66;font-size:9px">3D load: '+(e&&e.message?e.message:"unknown")+'</div>'});
  function loop(){requestAnimationFrame(loop);if(swordMixer)swordMixer.update(Math.min(swordClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
