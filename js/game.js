@@ -1,12 +1,12 @@
-import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";import {DRACOLoader} from "three/addons/loaders/DRACOLoader.js";
 (()=>{"use strict";const names=["剑盾","弓箭","骑兵","斧兵"],pre=["swordsman","archer","cavalry","axe"],N=6,$=s=>document.querySelector(s),B=$("#board");let sword3D=null,swordMixer=null,swordIdle=null,swordAttack=null,swordClock=new THREE.Clock(),swordReady=false,swordAttacking=false,swordAttackQueued=false,weapon3D=null,shield3D=null;let G=[],total=0,best=0,Q=-1,busy=0,U=[],down=-1;const rnd=()=>Math.floor(Math.random()*4),id=(r,c)=>r*N+c,row=i=>Math.floor(i/N),col=i=>i%N,near=(a,b)=>Math.abs(row(a)-row(b))+Math.abs(col(a)-col(b))===1,wait=n=>new Promise(r=>setTimeout(r,n)),need=l=>5,icon=(t,l)=>pre[t]+"_lv"+l+".png";function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupSwordsman3D(){
  const host=document.querySelector("#swordsman3d");if(!host||host.dataset.three)return;
  host.dataset.three="1";host.innerHTML="";host.classList.add("swordsman3d");
- const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true});
+ const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true});const makeLoader=()=>{const l=new GLTFLoader(),d=new DRACOLoader();d.setDecoderPath("https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/");l.setDRACOLoader(d);return l};
  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));ren.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(ren.domElement);
  const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
  scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
- new GLTFLoader().load("swordsman_lv1.glb?v=54",g=>{
+ makeLoader().load("swordsman_lv1.glb?v=55",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
   sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(rawSize.y,.001));
@@ -20,7 +20,7 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
   const rightHand=bones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
   const leftHand=bones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
   const attach=(url,hand,kind)=>{
-   new GLTFLoader().load(url,obj=>{
+   makeLoader().load(url,obj=>{
     const model=obj.scene,b=new THREE.Box3().setFromObject(model),s=b.getSize(new THREE.Vector3()),ctr=b.getCenter(new THREE.Vector3()),axis=Math.max(s.x,s.y,s.z),scale=(size.y*.21)/Math.max(axis,.001);
     model.scale.setScalar(scale);model.position.set(-ctr.x*scale,-ctr.y*scale,-ctr.z*scale);
     if(kind==="shield")model.rotation.set(0,Math.PI/2,0);
@@ -28,8 +28,8 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
     if(kind==="sword")weapon3D=model;else shield3D=model;
    },undefined,e=>console.error("KB "+kind+" load failed",e));
   };
-  attach("sword_lv1.glb?v=54",rightHand,"sword");attach("shield_lv1.glb?v=54",leftHand,"shield");
- },undefined,e=>{console.error("KB swordsman load failed",e);host.innerHTML='<div style="color:#ffcc66;font-size:10px">3D model load error</div>'});
+  attach("sword_lv1.glb?v=55",rightHand,"sword");attach("shield_lv1.glb?v=55",leftHand,"shield");
+ },undefined,e=>{console.error("KB swordsman load failed",e);host.innerHTML='<div style="color:#ffcc66;font-size:9px">3D load: '+(e&&e.message?e.message:"unknown")+'</div>'});
  function loop(){requestAnimationFrame(loop);if(swordMixer)swordMixer.update(Math.min(swordClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
 function playSwordAttack(){
