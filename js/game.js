@@ -6,7 +6,7 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));ren.outputColorSpace=THREE.SRGBColorSpace;ren.setClearColor(0x000000,0);ren.domElement.style.cssText="display:block;width:100%;height:100%;position:absolute;inset:0;z-index:5";host.style.position="relative";host.appendChild(ren.domElement);
  const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
  scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
- makeLoader().load("./swordsman_lv1.glb?v=65",g=>{
+ makeLoader().load("./swordsman_lv1.glb?v=66",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
   sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(rawSize.y,.001));
@@ -47,7 +47,7 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
     console.info("KB "+kind+" loaded",hand?("attached to "+hand.name):"fallback");
    },undefined,e=>console.error("KB "+kind+" load failed",e));
   };
-  attach("./sword_lv1.glb?v=65",rightHand,"sword");attach("./shield_lv1.glb?v=65",leftHand,"shield");
+  attach("./sword_lv1.glb?v=66",rightHand,"sword");attach("./shield_lv1.glb?v=66",leftHand,"shield");
  },undefined,e=>{console.error("KB swordsman load failed",e);host.innerHTML='<div style="color:#ffcc66;font-size:9px">3D load: '+(e&&e.message?e.message:"unknown")+'</div>'});
  function loop(){requestAnimationFrame(loop);if(swordMixer)swordMixer.update(Math.min(swordClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
@@ -57,14 +57,14 @@ function setupWarrior3D(){
  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));ren.outputColorSpace=THREE.SRGBColorSpace;ren.setClearColor(0x000000,0);ren.domElement.style.cssText="display:block;width:100%;height:100%;position:absolute;inset:0;z-index:5";host.style.position="relative";host.appendChild(ren.domElement);
  const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
  scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
- loader.load("./Warrior.glb?v=65",g=>{warrior3D=g.scene;scene.add(warrior3D);const raw=new THREE.Box3().setFromObject(warrior3D),rs=raw.getSize(new THREE.Vector3()),rc=raw.getCenter(new THREE.Vector3());
+ loader.load("./Warrior.glb?v=66",g=>{warrior3D=g.scene;scene.add(warrior3D);const raw=new THREE.Box3().setFromObject(warrior3D),rs=raw.getSize(new THREE.Vector3()),rc=raw.getCenter(new THREE.Vector3());
  warrior3D.position.set(-rc.x,-raw.min.y,-rc.z);warrior3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;warrior3D.scale.setScalar(4.158/Math.max(rs.y,.001));
  const fit=new THREE.Box3().setFromObject(warrior3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());warrior3D.position.x-=center.x;warrior3D.position.y-=fit.min.y;
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
- warriorMixer=new THREE.AnimationMixer(warrior3D);const clips=g.animations||[];warriorIdle=clips.find(a=>/combat[ _-]*stance|idle/i.test(a.name))||null;warriorAttack=clips.find(a=>/^attack$|attack/i.test(a.name))||null;
+ warriorMixer=new THREE.AnimationMixer(warrior3D);const clips=g.animations||[];warriorIdle=clips.find(a=>/^idle[ _-]*5$/i.test(a.name))||clips.find(a=>/idle5/i.test(a.name))||clips.find(a=>/idle/i.test(a.name))||null;warriorAttack=clips.find(a=>/^attack$|attack/i.test(a.name))||null;
  if(warriorIdle)warriorMixer.clipAction(warriorIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();warriorReady=true;
  const bones=[];warrior3D.traverse(o=>{if(o.isBone)bones.push(o)});const rightHand=bones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
- loader.load("./Axe.glb?v=65",ag=>{axe3D=ag.scene;const b=new THREE.Box3().setFromObject(axe3D),s=b.getSize(new THREE.Vector3()),axis=Math.max(s.x,s.y,s.z),target=size.y*.5355,scale=target/Math.max(axis,.001);
+ loader.load("./Axe.glb?v=66",ag=>{axe3D=ag.scene;const b=new THREE.Box3().setFromObject(axe3D),s=b.getSize(new THREE.Vector3()),axis=Math.max(s.x,s.y,s.z),target=size.y*.5355,scale=target/Math.max(axis,.001);
  if(rightHand){const hs=new THREE.Vector3();rightHand.getWorldScale(hs);axe3D.scale.set(scale/Math.max(hs.x,.001),scale/Math.max(hs.y,.001),scale/Math.max(hs.z,.001));rightHand.add(axe3D);axe3D.position.set(0,.06*size.y,0)}
  else{axe3D.scale.setScalar(scale);warrior3D.add(axe3D);axe3D.position.set(.3*size.x,.48*size.y,.08*size.z)}axe3D.traverse(n=>{if(n.isMesh)n.frustumCulled=false})});
  },undefined,e=>console.error("KB warrior load failed",e));
