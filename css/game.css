@@ -249,3 +249,8 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 .units .unit:nth-child(4){position:absolute!important;left:112px!important;top:28px!important;width:209px!important;height:180px!important;z-index:9998!important;overflow:visible!important}
 .units .unit:nth-child(4) .icon,.warrior3d,.warrior3d canvas{width:209px!important;height:180px!important;min-height:180px!important;overflow:visible!important}
 @media(max-width:430px){.units .unit:nth-child(4){left:112px!important;top:28px!important;width:209px!important;height:180px!important}}
+
+/* V65 harden both 3D actor viewports */
+#swordsman3d,#warrior3d{display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;overflow:visible!important}
+#swordsman3d canvas,#warrior3d canvas{display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:5!important;pointer-events:none!important}
+.units .unit:first-child,.units .unit:nth-child(4){display:block!important;visibility:visible!important;opacity:1!important}
