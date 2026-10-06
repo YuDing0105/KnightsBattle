@@ -71,7 +71,7 @@ function setupWarrior3D(){
    const hs=new THREE.Vector3();rightHand.getWorldScale(hs);
    axe3D.scale.set(worldScale/Math.max(hs.x,.001),worldScale/Math.max(hs.y,.001),worldScale/Math.max(hs.z,.001));
    rightHand.add(axe3D);
-   axe3D.rotation.set(0,Math.PI/2,0);
+   axe3D.rotation.set(0,-Math.PI/2,0);
    // Recompute bounds AFTER final scale/rotation. Meshy pivot is not the grip point.
    axe3D.position.set(0,0,0);axe3D.updateMatrixWorld(true);
    // Build the grip from the actual wooden shaft geometry, not from the full axe bounds.
@@ -95,7 +95,7 @@ function setupWarrior3D(){
    ));
    console.info("KB axe pivot corrected; grip anchored to palm",rightHand.name,gripLocal.toArray());
  }else{
-   axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,Math.PI/2,0);
+   axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,-Math.PI/2,0);
    axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);
  }
  axe3D.visible=true;axe3D.traverse(n=>{n.visible=true;if(n.isMesh)n.frustumCulled=false});
