@@ -75,7 +75,9 @@ function setupWarrior3D(){
  axe3D.rotation.set(0,Math.PI/2,0);
  // Meshy/Mixamo hand bone sits near the wrist; move inward along the hand axis by about half a fist.
  const fist= size.y*.045;
- axe3D.position.x=-(fist+size.y*.07)/Math.max(hs.x,.001);
+ // Reference grip: palm encloses the lower-middle wooden shaft, well below the axe head.
+ const handleGripFromHead=size.y*.18;
+ axe3D.position.x=-(fist+handleGripFromHead)/Math.max(hs.x,.001);
  axe3D.position.y=0;
  axe3D.position.z=0;
  console.info("KB Warrior right hand:",rightHand.name,"axe grip offset:",axe3D.position.toArray());
