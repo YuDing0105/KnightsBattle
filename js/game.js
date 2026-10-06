@@ -126,7 +126,7 @@ function setupWarrior3D(){
    // User-defined FRONT is the image arrow direction. Move BACK by 0.10 unit.
    const axeForwardWorld=new THREE.Vector3(-1,0,0).applyQuaternion(axe3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
    const axeForwardLocal=axeForwardWorld.clone().applyQuaternion(axeGripBone.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
-   axe3D.position.add(axeForwardLocal.multiplyScalar((-axeAllSize.y*.10)/Math.max(parentScale.x,.001)));
+   axe3D.position.add(axeForwardLocal.multiplyScalar((axeAllSize.y*.10)/Math.max(parentScale.x,.001)));
    axeGripBone.updateMatrixWorld(true);
    window.KB_AXE_GRIP=axeGripBone;
  }else{
