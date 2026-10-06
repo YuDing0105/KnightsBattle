@@ -120,6 +120,13 @@ function setupWarrior3D(){
    const axeUpWorld=new THREE.Vector3(0,1,0).applyQuaternion(axe3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
    const axeUpLocal=axeUpWorld.clone().applyQuaternion(axeGripBone.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
    axe3D.position.add(axeUpLocal.multiplyScalar((axeAllSize.y*.5)/Math.max(parentScale.y,.001)));
+   // V83 calibration: whole axe length = 1 unit.
+   // Down = -0.25 unit along the defined axe-up axis.
+   axe3D.position.add(axeUpLocal.clone().multiplyScalar((-axeAllSize.y*.25)/Math.max(parentScale.y,.001)));
+   // User-defined FRONT is the image arrow direction. Move BACK by 0.10 unit.
+   const axeForwardWorld=new THREE.Vector3(-1,0,0).applyQuaternion(axe3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
+   const axeForwardLocal=axeForwardWorld.clone().applyQuaternion(axeGripBone.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
+   axe3D.position.add(axeForwardLocal.multiplyScalar((-axeAllSize.y*.10)/Math.max(parentScale.x,.001)));
    axeGripBone.updateMatrixWorld(true);
    window.KB_AXE_GRIP=axeGripBone;
  }else{
