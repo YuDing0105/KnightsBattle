@@ -21,7 +21,7 @@ function setIconInstant(im,src){
  makeLoader().load("./swordsman_512.glb",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
-  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.15)/Math.max(rawSize.y,.001));
+  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.3225)/Math.max(rawSize.y,.001));
   const fit=new THREE.Box3().setFromObject(sword3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());
   sword3D.position.x-=center.x;sword3D.position.y-=fit.min.y;
   const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
@@ -165,7 +165,7 @@ function setupArcher3D(){
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  if(archerRightHand){
-   const fistDistance=size.y*.045*1.5;
+   const fistDistance=size.y*.045*(-1.5);
    const faceForwardWorld=new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
    const parent=archerRightHand.parent;
    const parentQuat=parent.getWorldQuaternion(new THREE.Quaternion());
@@ -176,7 +176,7 @@ function setupArcher3D(){
    archerMixer.addEventListener("loop",()=>{});
    const originalUpdate=archerMixer.update.bind(archerMixer);
    archerMixer.update=(dt)=>{originalUpdate(dt);archerRightHand.position.copy(basePos).add(localMove);archerRightHand.updateMatrixWorld(true)};
-   console.info("KB Archer right hand correction: 1.5 fists forward",localMove.toArray());
+   console.info("KB Archer right hand correction: reversed; net 1.5 fists opposite original correction",localMove.toArray());
  }
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
