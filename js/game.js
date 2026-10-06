@@ -21,7 +21,7 @@ function setIconInstant(im,src){
  makeLoader().load("./swordsman_512.glb",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
-  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.10)/Math.max(rawSize.y,.001));
+  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.15)/Math.max(rawSize.y,.001));
   const fit=new THREE.Box3().setFromObject(sword3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());
   sword3D.position.x-=center.x;sword3D.position.y-=fit.min.y;
   const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
@@ -161,6 +161,23 @@ function setupArcher3D(){
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
  archerMixer=new THREE.AnimationMixer(archer3D);const clips=g.animations||[];window.KB_ARCHER_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_ARCHER_ANIMATIONS);
  const norm=s=>(s||"").replace(/[ _-]/g,"").toLowerCase();archerIdle=clips.find(a=>norm(a.name)==="archeryshot2")||null;archerAttack=clips.find(a=>norm(a.name)==="archeryshot3")||null;
+ // Correct right-hand penetration for both Archery Shot 2 and 3 at skeleton level.
+ const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
+ const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
+ if(archerRightHand){
+   const fistDistance=size.y*.045*1.5;
+   const faceForwardWorld=new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
+   const parent=archerRightHand.parent;
+   const parentQuat=parent.getWorldQuaternion(new THREE.Quaternion());
+   const parentScale=new THREE.Vector3();parent.getWorldScale(parentScale);
+   const localMove=faceForwardWorld.clone().applyQuaternion(parentQuat.clone().invert());
+   localMove.set(localMove.x*fistDistance/Math.max(parentScale.x,.001),localMove.y*fistDistance/Math.max(parentScale.y,.001),localMove.z*fistDistance/Math.max(parentScale.z,.001));
+   const basePos=archerRightHand.position.clone();
+   archerMixer.addEventListener("loop",()=>{});
+   const originalUpdate=archerMixer.update.bind(archerMixer);
+   archerMixer.update=(dt)=>{originalUpdate(dt);archerRightHand.position.copy(basePos).add(localMove);archerRightHand.updateMatrixWorld(true)};
+   console.info("KB Archer right hand correction: 1.5 fists forward",localMove.toArray());
+ }
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(archerMixer)archerMixer.update(Math.min(archerClock.getDelta(),.05));ren.render(scene,cam)}loop();
