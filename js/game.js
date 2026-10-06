@@ -112,7 +112,15 @@ function setupWarrior3D(){
    const parentScale=new THREE.Vector3();axeGripBone.getWorldScale(parentScale);
    const deltaLocal=deltaWorld.clone().applyQuaternion(parentQuat.clone().invert());
    deltaLocal.set(deltaLocal.x/Math.max(parentScale.x,.001),deltaLocal.y/Math.max(parentScale.y,.001),deltaLocal.z/Math.max(parentScale.z,.001));
-   axe3D.position.add(deltaLocal);axeGripBone.updateMatrixWorld(true);
+   axe3D.position.add(deltaLocal);
+   // User-defined axe UP = shaft direction toward the axe head (red-arrow direction).
+   // Move the whole axe upward by half of its own full length while preserving the grip/bone hierarchy.
+   axe3D.updateMatrixWorld(true);
+   const axeAllBox=new THREE.Box3().setFromObject(axe3D),axeAllSize=axeAllBox.getSize(new THREE.Vector3());
+   const axeUpWorld=new THREE.Vector3(0,1,0).applyQuaternion(axe3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
+   const axeUpLocal=axeUpWorld.clone().applyQuaternion(axeGripBone.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
+   axe3D.position.add(axeUpLocal.multiplyScalar((axeAllSize.y*.5)/Math.max(parentScale.y,.001)));
+   axeGripBone.updateMatrixWorld(true);
    window.KB_AXE_GRIP=axeGripBone;
  }else{
    axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,-Math.PI/2,0);axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);
