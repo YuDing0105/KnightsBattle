@@ -277,3 +277,7 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 .units .unit:nth-child(2){position:absolute!important;left:186px!important;top:28px!important;width:209px!important;height:180px!important;z-index:9998!important;overflow:visible!important}
 .units .unit:nth-child(2) .icon,.archer3d,.archer3d canvas{width:209px!important;height:180px!important;min-height:180px!important}
 @media(max-width:430px){.units .unit:nth-child(2){left:92px!important;top:28px!important;width:209px!important;height:180px!important}}
+
+/* V89 Archer calibration: 13 grids left, 5 grids up (20px/grid) */
+.units .unit:nth-child(2){left:-74px!important;top:-72px!important}
+@media(max-width:430px){.units .unit:nth-child(2){left:-168px!important;top:-72px!important}}
