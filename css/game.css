@@ -266,3 +266,7 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 /* V69: move warrior 6 calibration grids (120px) right from V67 */
 .units .unit:nth-child(4){left:-8px!important}
 @media(max-width:430px){.units .unit:nth-child(4){left:-8px!important}}
+
+/* V72 swordsman: 2 calibration grids (40px) forward/right */
+.units .unit:first-child{left:126px!important}
+@media(max-width:430px){.units .unit:first-child{left:32px!important}}
