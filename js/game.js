@@ -74,13 +74,25 @@ function setupWarrior3D(){
    axe3D.rotation.set(0,Math.PI/2,0);
    // Recompute bounds AFTER final scale/rotation. Meshy pivot is not the grip point.
    axe3D.position.set(0,0,0);axe3D.updateMatrixWorld(true);
-   const localBox=new THREE.Box3().setFromObject(axe3D);
-   const worldCenter=localBox.getCenter(new THREE.Vector3());
-   const worldSize=localBox.getSize(new THREE.Vector3());
-   // Put the lower-middle shaft at the hand origin: ~68% from blade/head toward pommel.
-   const gripWorld=new THREE.Vector3(worldCenter.x,localBox.min.y+worldSize.y*.32,worldCenter.z);
-   const gripLocal=rightHand.worldToLocal(gripWorld.clone());
-   axe3D.position.sub(gripLocal);
+   // Build the grip from the actual wooden shaft geometry, not from the full axe bounds.
+   // The shaft is the narrow central column; sample the lower-middle point INSIDE that volume.
+   const fullBox=new THREE.Box3().setFromObject(axe3D),fullSize=fullBox.getSize(new THREE.Vector3()),fullCenter=fullBox.getCenter(new THREE.Vector3());
+   const gripWorld=new THREE.Vector3(
+     fullCenter.x,
+     fullBox.min.y + fullSize.y*.38,
+     fullCenter.z
+   );
+   // Convert world-space geometric grip point into the axe parent's (hand bone) local space.
+   const handOriginWorld=new THREE.Vector3();rightHand.getWorldPosition(handOriginWorld);
+   const deltaWorld=handOriginWorld.clone().sub(gripWorld);
+   const parentInv=rightHand.matrixWorld.clone().invert();
+   const deltaLocal=deltaWorld.clone().transformDirection(parentInv);
+   const parentScale=new THREE.Vector3();rightHand.getWorldScale(parentScale);
+   axe3D.position.add(new THREE.Vector3(
+     deltaWorld.x/Math.max(parentScale.x,.001),
+     deltaWorld.y/Math.max(parentScale.y,.001),
+     deltaWorld.z/Math.max(parentScale.z,.001)
+   ));
    console.info("KB axe pivot corrected; grip anchored to palm",rightHand.name,gripLocal.toArray());
  }else{
    axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,Math.PI/2,0);
