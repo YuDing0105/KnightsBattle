@@ -69,34 +69,17 @@ function setupWarrior3D(){
  const rawBox=new THREE.Box3().setFromObject(axe3D),rawSize=rawBox.getSize(new THREE.Vector3()),axis=Math.max(rawSize.x,rawSize.y,rawSize.z),target=size.y*.5355,worldScale=target/Math.max(axis,.001);
  if(rightHand){
    const hs=new THREE.Vector3();rightHand.getWorldScale(hs);
+   const axeGripBone=new THREE.Object3D();axeGripBone.name="KB_AxeGrip";rightHand.add(axeGripBone);
+   axeGripBone.position.set(0,0,0);axeGripBone.rotation.set(0,0,0);axeGripBone.add(axe3D);
    axe3D.scale.set(worldScale/Math.max(hs.x,.001),worldScale/Math.max(hs.y,.001),worldScale/Math.max(hs.z,.001));
-   rightHand.add(axe3D);
-   axe3D.rotation.set(0,-Math.PI/2,0);
-   // Recompute bounds AFTER final scale/rotation. Meshy pivot is not the grip point.
-   axe3D.position.set(0,0,0);axe3D.updateMatrixWorld(true);
-   // Build the grip from the actual wooden shaft geometry, not from the full axe bounds.
-   // The shaft is the narrow central column; sample the lower-middle point INSIDE that volume.
-   const fullBox=new THREE.Box3().setFromObject(axe3D),fullSize=fullBox.getSize(new THREE.Vector3()),fullCenter=fullBox.getCenter(new THREE.Vector3());
-   const gripWorld=new THREE.Vector3(
-     fullCenter.x,
-     fullBox.min.y + fullSize.y*.285,
-     fullCenter.z
-   );
-   // Convert world-space geometric grip point into the axe parent's (hand bone) local space.
-   const handOriginWorld=new THREE.Vector3();rightHand.getWorldPosition(handOriginWorld);
-   const deltaWorld=handOriginWorld.clone().sub(gripWorld);
-   const parentInv=rightHand.matrixWorld.clone().invert();
-   const deltaLocal=deltaWorld.clone().transformDirection(parentInv);
-   const parentScale=new THREE.Vector3();rightHand.getWorldScale(parentScale);
-   axe3D.position.add(new THREE.Vector3(
-     deltaWorld.x/Math.max(parentScale.x,.001),
-     deltaWorld.y/Math.max(parentScale.y,.001),
-     deltaWorld.z/Math.max(parentScale.z,.001)
-   ));
-   console.info("KB axe pivot corrected; grip anchored to palm",rightHand.name,gripLocal.toArray());
+   axe3D.rotation.set(0,-Math.PI/2,0);axe3D.position.set(0,0,0);axeGripBone.updateMatrixWorld(true);
+   const box=new THREE.Box3().setFromObject(axe3D),bs=box.getSize(new THREE.Vector3()),bc=box.getCenter(new THREE.Vector3());
+   const gripWorld=new THREE.Vector3(bc.x,box.min.y+bs.y*.285,bc.z);
+   const gripLocal=axeGripBone.worldToLocal(gripWorld.clone());
+   axe3D.position.sub(gripLocal);axeGripBone.updateMatrixWorld(true);
+   window.KB_AXE_GRIP=axeGripBone;
  }else{
-   axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,-Math.PI/2,0);
-   axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);
+   axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,-Math.PI/2,0);axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);
  }
  axe3D.visible=true;axe3D.traverse(n=>{n.visible=true;if(n.isMesh)n.frustumCulled=false});
 })
