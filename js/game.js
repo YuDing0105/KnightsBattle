@@ -75,9 +75,32 @@ function setupWarrior3D(){
    axe3D.rotation.set(0,-Math.PI/2,0);axe3D.position.set(0,0,0);axeGripBone.updateMatrixWorld(true);
    // Calibrate the TWO models together: derive palm center from Warrior hand geometry and shaft center from Axe geometry.
    axeGripBone.updateMatrixWorld(true);axe3D.updateMatrixWorld(true);
-   const box=new THREE.Box3().setFromObject(axe3D),bs=box.getSize(new THREE.Vector3()),bc=box.getCenter(new THREE.Vector3());
-   // Wooden lower-middle shaft: centered through its thickness and lower than the previous full-model estimate.
-   const shaftGripWorld=new THREE.Vector3(bc.x,box.min.y+bs.y*.31,bc.z);
+   // Find the actual SHAFT mesh/node inside Axe.glb. Do NOT derive grip from the whole-axe bounding box.
+   const shaftCandidates=[];
+   axe3D.traverse(n=>{if(n.isMesh){
+     const nm=(n.name||"").toLowerCase();
+     const g=n.geometry;if(!g)return;
+     if(!g.boundingBox)g.computeBoundingBox();
+     const bb=g.boundingBox,sz=bb.getSize(new THREE.Vector3());
+     // Prefer explicit Meshy names; otherwise identify the long narrow handle geometry.
+     const named=/shaft|handle|haft|wood|grip/.test(nm);
+     const slender=sz.y>Math.max(sz.x,sz.z)*2.2;
+     if(named||slender)shaftCandidates.push({n,named,ratio:sz.y/Math.max(sz.x,sz.z,.0001),vol:sz.x*sz.y*sz.z});
+   }});
+   shaftCandidates.sort((a,b)=>(b.named-a.named)||(b.ratio-a.ratio)||(b.vol-a.vol));
+   const shaft=shaftCandidates[0]?.n||null;
+   let shaftGripWorld;
+   if(shaft&&shaft.geometry){
+     if(!shaft.geometry.boundingBox)shaft.geometry.computeBoundingBox();
+     // Center of the SHAFT MESH itself (local geometry center), transformed into world space.
+     const shaftCenterLocal=shaft.geometry.boundingBox.getCenter(new THREE.Vector3());
+     shaftGripWorld=shaft.localToWorld(shaftCenterLocal.clone());
+     console.info("KB Axe shaft detected:",shaft.name||"(unnamed mesh)","grip center:",shaftGripWorld.toArray());
+   }else{
+     // Safe fallback only if the GLB exposes no identifiable shaft mesh.
+     const axeOriginWorld=new THREE.Vector3();axe3D.getWorldPosition(axeOriginWorld);shaftGripWorld=axeOriginWorld;
+     console.warn("KB Axe shaft mesh not detected; using axe origin fallback");
+   }
    // Mixamo RightHand origin is wrist-biased. Offset the anchor into the closed fist/palm center.
    const palmOffsetWorld=size.y*.035;
    const handQuat=rightHand.getWorldQuaternion(new THREE.Quaternion());
