@@ -79,7 +79,7 @@ function setupWarrior3D(){
    const fullBox=new THREE.Box3().setFromObject(axe3D),fullSize=fullBox.getSize(new THREE.Vector3()),fullCenter=fullBox.getCenter(new THREE.Vector3());
    const gripWorld=new THREE.Vector3(
      fullCenter.x,
-     fullBox.min.y + fullSize.y*.38,
+     fullBox.min.y + fullSize.y*.285,
      fullCenter.z
    );
    // Convert world-space geometric grip point into the axe parent's (hand bone) local space.
