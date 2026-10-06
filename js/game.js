@@ -21,12 +21,12 @@ function setIconInstant(im,src){
  makeLoader().load("./swordsman_512.glb",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
-  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.0117125)/Math.max(rawSize.y,.001));
+  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.11288375)/Math.max(rawSize.y,.001));
   const fit=new THREE.Box3().setFromObject(sword3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());
   sword3D.position.x-=center.x;sword3D.position.y-=fit.min.y;
   // IMPORTANT: camera framing must stay tied to the original baseline size.
   // Previously it used the post-scale size, so every model enlargement moved the camera back by the same ratio and visually cancelled the scale change.
-  const baselineHeight=size.y/1.0117125;
+  const baselineHeight=size.y/1.11288375;
   const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(baselineHeight*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,baselineHeight*.5,dist);cam.lookAt(0,baselineHeight*.5,0);
   swordMixer=new THREE.AnimationMixer(sword3D);const clips=g.animations||[],idleClips=clips.filter(a=>/idle/i.test(a.name));
   swordIdle=clips.find(a=>/combat[ _-]*stance/i.test(a.name))||idleClips[0]||null;swordAttack=clips.find(a=>/attack|slash|sword|strike|melee|swing/i.test(a.name))||null;
