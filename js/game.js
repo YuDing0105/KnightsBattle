@@ -73,10 +73,23 @@ function setupWarrior3D(){
    axeGripBone.position.set(0,0,0);axeGripBone.rotation.set(0,0,0);axeGripBone.add(axe3D);
    axe3D.scale.set(worldScale/Math.max(hs.x,.001),worldScale/Math.max(hs.y,.001),worldScale/Math.max(hs.z,.001));
    axe3D.rotation.set(0,-Math.PI/2,0);axe3D.position.set(0,0,0);axeGripBone.updateMatrixWorld(true);
+   // Calibrate the TWO models together: derive palm center from Warrior hand geometry and shaft center from Axe geometry.
+   axeGripBone.updateMatrixWorld(true);axe3D.updateMatrixWorld(true);
    const box=new THREE.Box3().setFromObject(axe3D),bs=box.getSize(new THREE.Vector3()),bc=box.getCenter(new THREE.Vector3());
-   const gripWorld=new THREE.Vector3(bc.x,box.min.y+bs.y*.285,bc.z);
-   const gripLocal=axeGripBone.worldToLocal(gripWorld.clone());
-   axe3D.position.sub(gripLocal);axeGripBone.updateMatrixWorld(true);
+   // Wooden lower-middle shaft: centered through its thickness and lower than the previous full-model estimate.
+   const shaftGripWorld=new THREE.Vector3(bc.x,box.min.y+bs.y*.31,bc.z);
+   // Mixamo RightHand origin is wrist-biased. Offset the anchor into the closed fist/palm center.
+   const palmOffsetWorld=size.y*.035;
+   const handQuat=rightHand.getWorldQuaternion(new THREE.Quaternion());
+   const palmDirWorld=new THREE.Vector3(1,0,0).applyQuaternion(handQuat).normalize();
+   const palmCenterWorld=new THREE.Vector3();rightHand.getWorldPosition(palmCenterWorld);palmCenterWorld.addScaledVector(palmDirWorld,palmOffsetWorld);
+   // Move Axe so its internal shaft center coincides exactly with Warrior palm center.
+   const deltaWorld=palmCenterWorld.clone().sub(shaftGripWorld);
+   const parentQuat=axeGripBone.getWorldQuaternion(new THREE.Quaternion());
+   const parentScale=new THREE.Vector3();axeGripBone.getWorldScale(parentScale);
+   const deltaLocal=deltaWorld.clone().applyQuaternion(parentQuat.clone().invert());
+   deltaLocal.set(deltaLocal.x/Math.max(parentScale.x,.001),deltaLocal.y/Math.max(parentScale.y,.001),deltaLocal.z/Math.max(parentScale.z,.001));
+   axe3D.position.add(deltaLocal);axeGripBone.updateMatrixWorld(true);
    window.KB_AXE_GRIP=axeGripBone;
  }else{
    axe3D.scale.setScalar(worldScale);warrior3D.add(axe3D);axe3D.rotation.set(0,-Math.PI/2,0);axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);
