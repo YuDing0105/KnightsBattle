@@ -164,7 +164,26 @@ function setupArcher3D(){
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
  archerMixer=new THREE.AnimationMixer(archer3D);const clips=g.animations||[];window.KB_ARCHER_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_ARCHER_ANIMATIONS);
  const norm=s=>(s||"").replace(/[ _-]/g,"").toLowerCase();archerIdle=clips.find(a=>norm(a.name)==="archeryshot2")||null;archerAttack=clips.find(a=>norm(a.name)==="archeryshot3")||null;
- // V99: use Archer animation-authored RightHand transform with no positional override.
+ // V100: start from animation-authored RightHand transform, then move exactly 3 fists along Archer Forward (+Z from Archer root).
+ const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
+ const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
+ if(archerRightHand){
+   const parent=archerRightHand.parent;
+   const fistDistance=size.y*.045*3;
+   const originalMixerUpdate=archerMixer.update.bind(archerMixer);
+   archerMixer.update=(dt)=>{
+     originalMixerUpdate(dt);
+     // Compute Forward from Archer ROOT every frame, never from the animated hand bone.
+     const forwardWorld=new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
+     const parentQuat=parent.getWorldQuaternion(new THREE.Quaternion());
+     const parentScale=new THREE.Vector3();parent.getWorldScale(parentScale);
+     const moveLocal=forwardWorld.clone().applyQuaternion(parentQuat.clone().invert());
+     moveLocal.set(moveLocal.x*fistDistance/Math.max(parentScale.x,.001),moveLocal.y*fistDistance/Math.max(parentScale.y,.001),moveLocal.z*fistDistance/Math.max(parentScale.z,.001));
+     // Mixer has just restored the animation-authored hand position; add only this frame's 3-fist forward offset.
+     archerRightHand.position.add(moveLocal);
+     archerRightHand.updateMatrixWorld(true);
+   };
+ }
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(archerMixer)archerMixer.update(Math.min(archerClock.getDelta(),.05));ren.render(scene,cam)}loop();
