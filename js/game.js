@@ -21,7 +21,7 @@ function setIconInstant(im,src){
  makeLoader().load("./swordsman_512.glb",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
-  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(rawSize.y,.001));
+  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.10)/Math.max(rawSize.y,.001));
   const fit=new THREE.Box3().setFromObject(sword3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());
   sword3D.position.x-=center.x;sword3D.position.y-=fit.min.y;
   const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
@@ -156,7 +156,7 @@ function setupArcher3D(){
  const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
  scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
  loader.load("./Archer_512.glb",g=>{archer3D=g.scene;scene.add(archer3D);const raw=new THREE.Box3().setFromObject(archer3D),rs=raw.getSize(new THREE.Vector3()),rc=raw.getCenter(new THREE.Vector3());
- archer3D.position.set(-rc.x,-raw.min.y,-rc.z);archer3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9+Math.PI/4;archer3D.scale.setScalar(4.158/Math.max(rs.y,.001));
+ archer3D.position.set(-rc.x,-raw.min.y,-rc.z);archer3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9-Math.PI/4;archer3D.scale.setScalar(4.158/Math.max(rs.y,.001));
  const fit=new THREE.Box3().setFromObject(archer3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());archer3D.position.x-=center.x;archer3D.position.y-=fit.min.y;
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
  archerMixer=new THREE.AnimationMixer(archer3D);const clips=g.animations||[];window.KB_ARCHER_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_ARCHER_ANIMATIONS);
