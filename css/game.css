@@ -270,3 +270,10 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 /* V72 swordsman: 2 calibration grids (40px) forward/right */
 .units .unit:first-child{left:126px!important}
 @media(max-width:430px){.units .unit:first-child{left:32px!important}}
+
+/* V88 Archer 3D viewport — same dimensions/render treatment as existing actors */
+#archer3d{display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;overflow:visible!important}
+#archer3d canvas{display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:5!important;pointer-events:none!important}
+.units .unit:nth-child(2){position:absolute!important;left:186px!important;top:28px!important;width:209px!important;height:180px!important;z-index:9998!important;overflow:visible!important}
+.units .unit:nth-child(2) .icon,.archer3d,.archer3d canvas{width:209px!important;height:180px!important;min-height:180px!important}
+@media(max-width:430px){.units .unit:nth-child(2){left:92px!important;top:28px!important;width:209px!important;height:180px!important}}
