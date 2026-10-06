@@ -168,18 +168,19 @@ function setupArcher3D(){
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  if(archerRightHand){
-   const fistDistance=size.y*.045*(-12.5);
-   const faceForwardWorld=new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
+   const fistDistance=size.y*.045*3;
+   // V97: reset to animation-authored hand position, then move exactly 3 fists to Archer's RIGHT.
+   const rightWorld=new THREE.Vector3(1,0,0).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
    const parent=archerRightHand.parent;
    const parentQuat=parent.getWorldQuaternion(new THREE.Quaternion());
    const parentScale=new THREE.Vector3();parent.getWorldScale(parentScale);
-   const localMove=faceForwardWorld.clone().applyQuaternion(parentQuat.clone().invert());
+   const localMove=rightWorld.clone().applyQuaternion(parentQuat.clone().invert());
    localMove.set(localMove.x*fistDistance/Math.max(parentScale.x,.001),localMove.y*fistDistance/Math.max(parentScale.y,.001),localMove.z*fistDistance/Math.max(parentScale.z,.001));
    const basePos=archerRightHand.position.clone();
    archerMixer.addEventListener("loop",()=>{});
    const originalUpdate=archerMixer.update.bind(archerMixer);
    archerMixer.update=(dt)=>{originalUpdate(dt);archerRightHand.position.copy(basePos).add(localMove);archerRightHand.updateMatrixWorld(true)};
-   console.info("KB Archer right hand correction: 12.5 fists in defined positive direction",localMove.toArray());
+   console.info("KB Archer right hand correction: reset + 3 fists right",localMove.toArray());
  }
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
