@@ -65,8 +65,24 @@ function setupWarrior3D(){
  if(warriorIdle)warriorMixer.clipAction(warriorIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();warriorReady=true;
  const bones=[];warrior3D.traverse(o=>{if(o.isBone)bones.push(o)});const rightHand=bones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  loader.load("./Axe_512.glb",ag=>{axe3D=ag.scene;const b=new THREE.Box3().setFromObject(axe3D),s=b.getSize(new THREE.Vector3()),axis=Math.max(s.x,s.y,s.z),target=size.y*.5355,scale=target/Math.max(axis,.001);
- if(rightHand){const hs=new THREE.Vector3();rightHand.getWorldScale(hs);axe3D.scale.set(scale/Math.max(hs.x,.001),scale/Math.max(hs.y,.001),scale/Math.max(hs.z,.001));rightHand.add(axe3D);axe3D.position.set(0,.06*size.y,0);axe3D.rotation.set(0,Math.PI/2,0)}
- else{axe3D.scale.setScalar(scale);warrior3D.add(axe3D);axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);axe3D.rotation.set(0,Math.PI/2,0)}axe3D.traverse(n=>{if(n.isMesh)n.frustumCulled=false})});
+ if(rightHand){
+ const hs=new THREE.Vector3();rightHand.getWorldScale(hs);
+ axe3D.scale.set(scale/Math.max(hs.x,.001),scale/Math.max(hs.y,.001),scale/Math.max(hs.z,.001));
+ rightHand.add(axe3D);
+ // Place the axe's handle center through the palm instead of offsetting from the hand bone.
+ const axeBox=new THREE.Box3().setFromObject(axe3D),axeSize=axeBox.getSize(new THREE.Vector3());
+ axe3D.position.set(0,0,0);
+ axe3D.rotation.set(0,Math.PI/2,0);
+ // Meshy/Mixamo hand bone sits near the wrist; move inward along the hand axis by about half a fist.
+ const fist= size.y*.045;
+ axe3D.position.x=-fist/Math.max(hs.x,.001);
+ axe3D.position.y=0;
+ axe3D.position.z=0;
+ console.info("KB Warrior right hand:",rightHand.name,"axe grip offset:",axe3D.position.toArray());
+ } else {
+ axe3D.scale.setScalar(scale);warrior3D.add(axe3D);
+ axe3D.position.set(.3*size.x,.48*size.y,.08*size.z);axe3D.rotation.set(0,Math.PI/2,0)
+}axe3D.traverse(n=>{if(n.isMesh)n.frustumCulled=false})});
  },undefined,e=>console.error("KB warrior load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(warriorMixer)warriorMixer.update(Math.min(warriorClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
