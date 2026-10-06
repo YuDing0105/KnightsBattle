@@ -174,11 +174,13 @@ function setupArcher3D(){
      originalMixerUpdate(dt);
      const handWorld=new THREE.Vector3(),headWorld=new THREE.Vector3();
      archerRightHand.getWorldPosition(handWorld);archerHead.getWorldPosition(headWorld);
-     const minClearance=size.y*.055;
+     const minClearance=size.y*.095;
      const delta=handWorld.clone().sub(headWorld),distance=delta.length();
      if(distance<minClearance){
        // Minimal-change rule: only RightHand position is corrected, and only while penetrating the head clearance sphere.
-       const pushWorld=(distance>.0001?delta.normalize():new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize()).multiplyScalar(minClearance-distance);
+       const awayFromHead=(distance>.0001?delta.normalize():new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize());
+       const extraClearance=size.y*.018;
+       const pushWorld=awayFromHead.multiplyScalar((minClearance-distance)+extraClearance);
        const parent=archerRightHand.parent,parentQuat=parent.getWorldQuaternion(new THREE.Quaternion()),parentScale=new THREE.Vector3();parent.getWorldScale(parentScale);
        const pushLocal=pushWorld.applyQuaternion(parentQuat.clone().invert());
        pushLocal.set(pushLocal.x/Math.max(parentScale.x,.001),pushLocal.y/Math.max(parentScale.y,.001),pushLocal.z/Math.max(parentScale.z,.001));
