@@ -28,7 +28,7 @@ import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GL
       model.scale.set(desiredWorldScale/Math.max(handWorldScale.x,.001),desiredWorldScale/Math.max(handWorldScale.y,.001),desiredWorldScale/Math.max(handWorldScale.z,.001));
       hand.add(model);
       model.position.set(0,0,0);
-      if(kind==="sword"){model.position.set(0,.06*size.y,0);model.rotation.set(0,0,0)}
+      if(kind==="sword"){model.position.set(0,.06*size.y,0);model.rotation.set(0,Math.PI/2,0)}
       else{
  model.rotation.set(0,-Math.PI/2,0);
  const fistOffset=size.y*.055;
