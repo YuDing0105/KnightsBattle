@@ -165,7 +165,7 @@ function setupArcher3D(){
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  if(archerRightHand){
-   const fistDistance=size.y*.045*(-1.5);
+   const fistDistance=size.y*.045*(-3.5);
    const faceForwardWorld=new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize();
    const parent=archerRightHand.parent;
    const parentQuat=parent.getWorldQuaternion(new THREE.Quaternion());
@@ -176,7 +176,7 @@ function setupArcher3D(){
    archerMixer.addEventListener("loop",()=>{});
    const originalUpdate=archerMixer.update.bind(archerMixer);
    archerMixer.update=(dt)=>{originalUpdate(dt);archerRightHand.position.copy(basePos).add(localMove);archerRightHand.updateMatrixWorld(true)};
-   console.info("KB Archer right hand correction: reversed; net 1.5 fists opposite original correction",localMove.toArray());
+   console.info("KB Archer right hand correction: 3.5 fists in corrected direction",localMove.toArray());
  }
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
