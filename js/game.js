@@ -164,23 +164,28 @@ function setupArcher3D(){
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
  archerMixer=new THREE.AnimationMixer(archer3D);const clips=g.animations||[];window.KB_ARCHER_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_ARCHER_ANIMATIONS);
  const norm=s=>(s||"").replace(/[ _-]/g,"").toLowerCase();archerIdle=clips.find(a=>norm(a.name)==="archeryshot2")||null;archerAttack=clips.find(a=>norm(a.name)==="archeryshot3")||null;
- // V101: preserve the original animation. Only apply a small collision correction to RightHand when it enters the head volume.
+ // V104: preserve the authored hand distance. Only resolve penetration against the CARTOON HEAD MODEL volume.
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
  if(archerRightHand&&archerHead){
    const originalMixerUpdate=archerMixer.update.bind(archerMixer);
    archerMixer.update=(dt)=>{
-     originalMixerUpdate(dt);
+     originalMixerUpdate(dt); // always reset to the original GLB animation pose first
      const handWorld=new THREE.Vector3(),headWorld=new THREE.Vector3();
      archerRightHand.getWorldPosition(handWorld);archerHead.getWorldPosition(headWorld);
-     const minClearance=size.y*.19;
-     const delta=handWorld.clone().sub(headWorld),distance=delta.length();
-     if(distance<minClearance){
-       // Minimal-change rule: only RightHand position is corrected, and only while penetrating the head clearance sphere.
-       const awayFromHead=(distance>.0001?delta.normalize():new THREE.Vector3(0,0,1).applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).normalize());
-       const extraClearance=size.y*.036;
-       const pushWorld=awayFromHead.multiplyScalar((minClearance-distance)+extraClearance);
+     // Large chibi head: use an ellipsoid around the actual head bone, not a generic left/right push.
+     const rx=size.y*.105, ry=size.y*.135, rz=size.y*.115;
+     const rel=handWorld.clone().sub(headWorld);
+     const q=archer3D.getWorldQuaternion(new THREE.Quaternion()).invert();
+     const local=rel.clone().applyQuaternion(q);
+     const metric=(local.x*local.x)/(rx*rx)+(local.y*local.y)/(ry*ry)+(local.z*local.z)/(rz*rz);
+     if(metric<1){
+       // Push radially to the nearest point OUTSIDE the head volume, preserving the animation's natural side/direction.
+       const k=1/Math.sqrt(Math.max(metric,.0001));
+       const targetLocal=local.multiplyScalar(k*1.08);
+       const targetWorld=targetLocal.applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).add(headWorld);
+       const pushWorld=targetWorld.sub(handWorld);
        const parent=archerRightHand.parent,parentQuat=parent.getWorldQuaternion(new THREE.Quaternion()),parentScale=new THREE.Vector3();parent.getWorldScale(parentScale);
        const pushLocal=pushWorld.applyQuaternion(parentQuat.clone().invert());
        pushLocal.set(pushLocal.x/Math.max(parentScale.x,.001),pushLocal.y/Math.max(parentScale.y,.001),pushLocal.z/Math.max(parentScale.z,.001));
