@@ -303,17 +303,28 @@ function setupHorse3D(){
    const hipsOffsetQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(26),0,0,"XYZ"));
    // Ride Idle contains a brief bad root/hips spin. Preserve the actual idle motion but suppress that spin.
    const hipsBaseEuler=hips?new THREE.Euler().setFromQuaternion(hips.quaternion,"YXZ"):null;
-   let stableIdleYaw=hipsBaseEuler?hipsBaseEuler.y:0,stableIdleRoll=hipsBaseEuler?hipsBaseEuler.z:0;
+   const stableIdleYaw=hipsBaseEuler?hipsBaseEuler.y:0,stableIdleRoll=hipsBaseEuler?hipsBaseEuler.z:0;
+   // Low-pass the actual Ride Idle pose instead of replacing it. This removes one-frame spikes/sudden keyframe jumps.
+   const idleSmooth=new Map();bones.forEach(b=>idleSmooth.set(b,{p:b.position.clone(),q:b.quaternion.clone()}));
    const baseUpdate=knightMixer.update.bind(knightMixer);
    knightMixer.update=dt=>{
-     baseUpdate(Math.min(dt,1/60));
+     const step=Math.min(dt,1/60);baseUpdate(step);
+     if(!knightAttacking){
+       const alpha=1-Math.exp(-step*9);
+       bones.forEach(b=>{const s=idleSmooth.get(b);if(!s)return;
+         // Reject extreme single-frame translation spikes, then smooth the valid Ride Idle motion.
+         if(s.p.distanceTo(b.position)<0.35)s.p.lerp(b.position,alpha);
+         s.q.slerp(b.quaternion,alpha);
+         b.position.copy(s.p);b.quaternion.copy(s.q);
+       });
+     }else{
+       // Track attack pose so returning to idle does not interpolate from stale transforms.
+       bones.forEach(b=>{const s=idleSmooth.get(b);if(s){s.p.copy(b.position);s.q.copy(b.quaternion)}});
+     }
      if(hips){
        if(!knightAttacking){
-         // Keep animated pitch/bobbing, but lock yaw and roll so the rider can never whirl around during Ride Idle.
-         const e=new THREE.Euler().setFromQuaternion(hips.quaternion,"YXZ");
-         e.y=stableIdleYaw;e.z=stableIdleRoll;hips.quaternion.setFromEuler(e);
+         const e=new THREE.Euler().setFromQuaternion(hips.quaternion,"YXZ");e.y=stableIdleYaw;e.z=stableIdleRoll;hips.quaternion.setFromEuler(e);
        }
-       // Preserve confirmed rider posture correction.
        hips.quaternion.multiply(hipsOffsetQ);
      }
      const b=bones[bd.boneIndex];
