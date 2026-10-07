@@ -313,3 +313,10 @@ body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
 #gridToggleWrap{position:fixed;right:8px;top:8px;z-index:62000;padding:5px 8px;border-radius:6px;background:#000a;color:#fff;font:700 11px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;gap:6px}
 #gridToggle{margin:0;width:14px;height:14px}
 #headBoneDebug,#bowDebug,#arrowDebug,#archerBoneDebug{display:none!important}
+
+/* V127 Horse 3D replaces cavalry top icon; temporary transform debugger */
+#horse3d,#horse3d canvas{width:209px!important;height:180px!important;min-height:180px!important;display:block!important;visibility:visible!important}
+.units .unit:nth-child(3){position:absolute!important;left:300px!important;top:28px!important;width:209px!important;height:180px!important;z-index:9998!important;overflow:visible!important}
+#horseDebug{display:block!important;position:fixed;right:8px;top:40px;z-index:63000;width:250px;padding:10px;background:#111e;color:#fff;border:1px solid #ff6b6b;border-radius:8px;font:11px/1.25 monospace}
+#horseDebug>b{display:block;margin-bottom:7px;color:#ff8a8a}#horseDebug label{display:grid;grid-template-columns:48px 1fr 40px;gap:4px;align-items:center;margin:4px 0}#horseDebug input{width:100%}#horseDebug output{text-align:right}#horseDebug button{margin:6px 5px 0 0;font-size:10px}#horseDebug pre{font-size:9px;white-space:pre-wrap}
+@media(max-width:430px){.units .unit:nth-child(3){left:206px!important;top:28px!important}}
