@@ -300,7 +300,7 @@ function setupHorse3D(){
    p.querySelector("#kbReset").onclick=zero;
    p.querySelector("#kbCopy").onclick=()=>{const b=bones[bd.boneIndex],txt="Knight Bone "+JSON.stringify({index:bd.boneIndex,name:b?.name||"",rx:bd.rx,ry:bd.ry,rz:bd.rz});p.querySelector("#kbOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    const baseUpdate=knightMixer.update.bind(knightMixer);
-   knightMixer.update=dt=>{baseUpdate(dt);const b=bones[bd.boneIndex];if(b){b.rotation.x+=THREE.MathUtils.degToRad(bd.rx);b.rotation.y+=THREE.MathUtils.degToRad(bd.ry);b.rotation.z+=THREE.MathUtils.degToRad(bd.rz);b.updateMatrixWorld(true)}};
+   knightMixer.update=dt=>{baseUpdate(dt);const hips=bones.find(b=>b.name==="mixamorigHips");if(hips)hips.rotation.x+=THREE.MathUtils.degToRad(26);const b=bones[bd.boneIndex];if(b){b.rotation.x+=THREE.MathUtils.degToRad(bd.rx);b.rotation.y+=THREE.MathUtils.degToRad(bd.ry);b.rotation.z+=THREE.MathUtils.degToRad(bd.rz);b.updateMatrixWorld(true)}};
   },undefined,e=>console.error("KB knight load failed",e));
  },undefined,e=>console.error("KB horse load failed",e));
  (function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(knightMixer)knightMixer.update(dt);ren.render(scene,cam)})();
