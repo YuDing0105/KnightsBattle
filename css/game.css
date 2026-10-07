@@ -347,3 +347,8 @@ body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
 /* V146 per-slider reset controls */
 #knightAttackDebug label{grid-template-columns:65px 1fr 38px 24px!important}
 #knightAttackDebug .katSliderReset{margin:0!important;padding:1px 3px!important;min-width:22px;height:20px;font-size:12px;line-height:1}
+
+/* V148 only Spear debugger visible */
+#knightBoneDebug,#knightAttackDebug,#horseDebug,#headBoneDebug,#bowDebug,#arrowDebug,#archerBoneDebug{display:none!important}
+#spearDebug{position:fixed;right:8px;top:40px;z-index:64000;width:270px;padding:10px;background:#111e;color:#fff;border:1px solid #ff5555;border-radius:8px;font:11px/1.25 monospace}
+#spearDebug>b{display:block;color:#ff7777;margin-bottom:7px}#spearDebug label{display:grid;grid-template-columns:48px 1fr 40px;gap:4px;align-items:center;margin:4px 0}#spearDebug input{width:100%}#spearDebug output{text-align:right}#spearDebug button{margin:6px 5px 0 0;font-size:10px}#spearDebug pre{font-size:9px;white-space:pre-wrap}
