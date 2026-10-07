@@ -301,12 +301,16 @@ function setupHorse3D(){
    p.querySelector("#kbCopy").onclick=()=>{const b=bones[bd.boneIndex],txt="Knight Bone "+JSON.stringify({index:bd.boneIndex,name:b?.name||"",rx:bd.rx,ry:bd.ry,rz:bd.rz});p.querySelector("#kbOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    const hips=bones.find(b=>b.name==="mixamorigHips"),neck=bones.find(b=>/mixamorig:?Neck|^Neck$/i.test(b.name)),head=bones.find(b=>/mixamorig:?Head$|^Head$/i.test(b.name));
    const hipsOffsetQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(26),0,0,"XYZ"));
-   const idleNeckQ=neck?neck.quaternion.clone():null,idleHeadQ=head?head.quaternion.clone():null;
+   // Capture the complete Ride Idle skeleton pose. Idle keeps this pose stable; attack is allowed to animate freely.
+   const idlePose=new Map();bones.forEach(b=>idlePose.set(b,{p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));
    const baseUpdate=knightMixer.update.bind(knightMixer);
    knightMixer.update=dt=>{
      baseUpdate(dt);
-     // Stabilize Ride Idle upper look to remove authored twitch; do not constrain Ride Attack.
-     if(!knightAttacking){if(neck&&idleNeckQ)neck.quaternion.copy(idleNeckQ);if(head&&idleHeadQ)head.quaternion.copy(idleHeadQ)}
+     if(!knightAttacking){
+       // Remove twitch from the UUID Ride Idle clip by holding its initial skeletal pose.
+       // The Knight remains mounted and visually stable instead of repeatedly snapping/nodding.
+       bones.forEach(b=>{const v=idlePose.get(b);if(v){b.position.copy(v.p);b.quaternion.copy(v.q);b.scale.copy(v.s)}});
+     }
      if(hips)hips.quaternion.multiply(hipsOffsetQ);
      const b=bones[bd.boneIndex];
      if(b){
