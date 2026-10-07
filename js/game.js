@@ -215,7 +215,7 @@ function setupArcher3D(){
  const archerLeftHand=archerBones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  loader.load("./Arrow_256.glb",ag=>{const arrow=ag.scene;const bb=new THREE.Box3().setFromObject(arrow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.42,desired=target/Math.max(axis,.001);
-   if(archerRightHand){const hs=new THREE.Vector3();archerRightHand.getWorldScale(hs);arrow.scale.set(desired/Math.max(hs.x,.001),desired/Math.max(hs.y,.001),desired/Math.max(hs.z,.001));archerRightHand.add(arrow);arrow.position.set(0,0,0);arrow.rotation.set(0,0,0)}
+   if(archerRightHand){const hs=new THREE.Vector3();archerRightHand.getWorldScale(hs);arrow.scale.set((desired*1.25)/Math.max(hs.x,.001),(desired*1.25)/Math.max(hs.y,.001),(desired*1.25)/Math.max(hs.z,.001));archerRightHand.add(arrow);arrow.position.set(-0.1,0.37,0.12);arrow.rotation.set(THREE.MathUtils.degToRad(101),0,0)}
    else{arrow.scale.setScalar(desired);archer3D.add(arrow);arrow.position.set(.25*size.x,.5*size.y,0)}
    arrow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_ARROW=arrow;setupArrowDebug(arrow);
  },undefined,e=>console.error("KB arrow load failed",e));
