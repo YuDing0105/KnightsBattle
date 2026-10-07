@@ -301,13 +301,21 @@ function setupHorse3D(){
    p.querySelector("#kbCopy").onclick=()=>{const b=bones[bd.boneIndex],txt="Knight Bone "+JSON.stringify({index:bd.boneIndex,name:b?.name||"",rx:bd.rx,ry:bd.ry,rz:bd.rz});p.querySelector("#kbOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    const hips=bones.find(b=>b.name==="mixamorigHips"),neck=bones.find(b=>/mixamorig:?Neck|^Neck$/i.test(b.name)),head=bones.find(b=>/mixamorig:?Head$|^Head$/i.test(b.name));
    const hipsOffsetQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(26),0,0,"XYZ"));
-   // Use the actual Ride Idle clip. Stabilize its playback timing instead of freezing/replacing its pose.
+   // Ride Idle contains a brief bad root/hips spin. Preserve the actual idle motion but suppress that spin.
+   const hipsBaseEuler=hips?new THREE.Euler().setFromQuaternion(hips.quaternion,"YXZ"):null;
+   let stableIdleYaw=hipsBaseEuler?hipsBaseEuler.y:0,stableIdleRoll=hipsBaseEuler?hipsBaseEuler.z:0;
    const baseUpdate=knightMixer.update.bind(knightMixer);
    knightMixer.update=dt=>{
-     // Clamp mixer step to prevent animation jumps after frame stalls/tab scheduling.
      baseUpdate(Math.min(dt,1/60));
-     // Preserve the confirmed rider posture correction on top of BOTH Ride Idle and Ride Attack.
-     if(hips)hips.quaternion.multiply(hipsOffsetQ);
+     if(hips){
+       if(!knightAttacking){
+         // Keep animated pitch/bobbing, but lock yaw and roll so the rider can never whirl around during Ride Idle.
+         const e=new THREE.Euler().setFromQuaternion(hips.quaternion,"YXZ");
+         e.y=stableIdleYaw;e.z=stableIdleRoll;hips.quaternion.setFromEuler(e);
+       }
+       // Preserve confirmed rider posture correction.
+       hips.quaternion.multiply(hipsOffsetQ);
+     }
      const b=bones[bd.boneIndex];
      if(b){
        // Quaternion delta prevents Euler-angle wrapping (the previous cause of Neck spinning).
