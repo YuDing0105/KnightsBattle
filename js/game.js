@@ -154,12 +154,13 @@ function setupWarrior3D(){
 }
 function setupArcherHandDebug(dbg){
  let p=document.querySelector("#archerBoneDebug");if(p)return;
- p=document.createElement("div");p.id="archerBoneDebug";p.innerHTML='<b>ARCHER RIGHT HAND DEBUG</b><label>Animation <select id="archDbgAnim"><option value="idle">Archery Shot 2</option><option value="attack">Archery Shot 3</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="archDbgReset">Reset</button><button id="archDbgCopy">Copy Values</button></div><pre id="archDbgOut"></pre>';
+ p=document.createElement("div");p.id="archerBoneDebug";p.innerHTML='<b>ARCHER ARM BONE DEBUG</b><label>Bone <select id="archDbgBone"><option value="hand">RightHand</option><option value="elbow">RightForeArm / Elbow</option></select></label><label>Animation <select id="archDbgAnim"><option value="idle">Archery Shot 2</option><option value="attack">Archery Shot 3</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="archDbgReset">Reset</button><button id="archDbgCopy">Copy Values</button></div><pre id="archDbgOut"></pre>';
  document.body.appendChild(p);
+ p.querySelector("#archDbgBone").onchange=e=>{dbg.target=e.target.value;["x","y","z","rx","ry","rz"].forEach(k=>dbg[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
  p.querySelectorAll("input").forEach(i=>i.oninput=()=>{dbg[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
  p.querySelector("#archDbgAnim").onchange=e=>{if(e.target.value==="attack")playArcherAttack();else if(archerMixer&&archerIdle){archerMixer.stopAllAction();archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play()}};
  p.querySelector("#archDbgReset").onclick=()=>{Object.keys(dbg).forEach(k=>dbg[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
- p.querySelector("#archDbgCopy").onclick=()=>{const txt="Archer RightHand "+JSON.stringify(dbg);p.querySelector("#archDbgOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+ p.querySelector("#archDbgCopy").onclick=()=>{const txt="Archer "+(dbg.target==="elbow"?"RightForeArm/Elbow":"RightHand")+" "+JSON.stringify(dbg);p.querySelector("#archDbgOut").textContent=txt;navigator.clipboard?.writeText(txt)};
 }
 function setupArcher3D(){
  const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
@@ -176,8 +177,9 @@ function setupArcher3D(){
  // V105 manual Archer RightHand debug controller.
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
- const dbg={x:0,y:0,z:0,rx:0,ry:0,rz:0},originalMixerUpdate=archerMixer.update.bind(archerMixer);
- if(archerRightHand)archerMixer.update=(dt)=>{originalMixerUpdate(dt);archerRightHand.position.x+=dbg.x;archerRightHand.position.y+=dbg.y;archerRightHand.position.z+=dbg.z;archerRightHand.rotation.x+=THREE.MathUtils.degToRad(dbg.rx);archerRightHand.rotation.y+=THREE.MathUtils.degToRad(dbg.ry);archerRightHand.rotation.z+=THREE.MathUtils.degToRad(dbg.rz);archerRightHand.updateMatrixWorld(true)};
+ const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
+ const dbg={target:"hand",x:0,y:0,z:0,rx:0,ry:0,rz:0},originalMixerUpdate=archerMixer.update.bind(archerMixer);
+ if(archerRightHand)archerMixer.update=(dt)=>{originalMixerUpdate(dt);const bone=dbg.target==="elbow"?(archerRightElbow||archerRightHand):archerRightHand;bone.position.x+=dbg.x;bone.position.y+=dbg.y;bone.position.z+=dbg.z;bone.rotation.x+=THREE.MathUtils.degToRad(dbg.rx);bone.rotation.y+=THREE.MathUtils.degToRad(dbg.ry);bone.rotation.z+=THREE.MathUtils.degToRad(dbg.rz);bone.updateMatrixWorld(true)};
  window.KB_ARCHER_HAND_DEBUG=dbg;
  setupArcherHandDebug(dbg);
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
