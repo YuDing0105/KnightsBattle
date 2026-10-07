@@ -175,6 +175,16 @@ function setupWarrior3D(){
  },undefined,e=>console.error("KB warrior load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(warriorMixer)warriorMixer.update(Math.min(warriorClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
+function setupBowDebug(bow){
+ if(document.querySelector("#bowDebug"))return;
+ const d={x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1};window.KB_BOW_DEBUG=d;
+ const basePos=bow.position.clone(),baseRot=bow.rotation.clone(),baseScale=bow.scale.clone();
+ const p=document.createElement("div");p.id="bowDebug";p.innerHTML='<b>ARCHER BOW DEBUG</b>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-2" max="2" step=".01" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<label>Scale <input data-k="scale" type="range" min=".2" max="3" step=".05" value="1"><output>1</output></label><div><button id="bowReset">Reset</button><button id="bowCopy">Copy Values</button></div><pre id="bowOut"></pre>';document.body.appendChild(p);
+ const apply=()=>{bow.position.set(basePos.x+d.x,basePos.y+d.y,basePos.z+d.z);bow.rotation.set(baseRot.x+THREE.MathUtils.degToRad(d.rx),baseRot.y+THREE.MathUtils.degToRad(d.ry),baseRot.z+THREE.MathUtils.degToRad(d.rz));bow.scale.copy(baseScale).multiplyScalar(d.scale)};
+ p.querySelectorAll("input").forEach(i=>i.oninput=()=>{d[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value;apply()});
+ p.querySelector("#bowReset").onclick=()=>{Object.assign(d,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});p.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};
+ p.querySelector("#bowCopy").onclick=()=>{const txt="Archer Bow "+JSON.stringify(d);p.querySelector("#bowOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+}
 function setupArcher3D(){
  const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true}),loader=new GLTFLoader();
@@ -192,6 +202,12 @@ function setupArcher3D(){
  const archerRightShoulder=archerBones.find(o=>/(mixamorigRightShoulder|right.*shoulder|shoulder.*r)/i.test(o.name))||null;
  const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
  const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
+ const archerLeftHand=archerBones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
+ loader.load("./Bow_256.glb",bg=>{const bow=bg.scene;const bb=new THREE.Box3().setFromObject(bow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.48,desired=target/Math.max(axis,.001);
+   if(archerLeftHand){const hs=new THREE.Vector3();archerLeftHand.getWorldScale(hs);bow.scale.set(desired/Math.max(hs.x,.001),desired/Math.max(hs.y,.001),desired/Math.max(hs.z,.001));archerLeftHand.add(bow);bow.position.set(0,0,0);bow.rotation.set(0,0,0)}
+   else{bow.scale.setScalar(desired);archer3D.add(bow);bow.position.set(-.25*size.x,.5*size.y,0)}
+   bow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_BOW=bow;setupBowDebug(bow);
+ },undefined,e=>console.error("KB bow load failed",e));
  const archerBaseUpdate=archerMixer.update.bind(archerMixer);
  archerMixer.update=(dt)=>{archerBaseUpdate(dt);if(archerRightShoulder)archerRightShoulder.rotation.x+=THREE.MathUtils.degToRad(39);if(archerRightElbow)archerRightElbow.rotation.x+=THREE.MathUtils.degToRad(-9);if(archerHead){archerHead.rotation.x+=THREE.MathUtils.degToRad(-21);archerHead.rotation.y+=THREE.MathUtils.degToRad(30)}};
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
