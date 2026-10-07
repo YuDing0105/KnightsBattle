@@ -20,10 +20,18 @@ function setIconInstant(im,src){
  p.querySelectorAll("input").forEach(i=>i.oninput=()=>{state[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
  p.querySelector("#hdReset").onclick=zero;p.querySelector("#hdCopy").onclick=()=>{const txt=(state.actor==="swordsman"?"Swordsman":"Warrior")+" "+p.querySelector("#hdBone").value+" "+JSON.stringify(state);p.querySelector("#hdOut").textContent=txt;navigator.clipboard?.writeText(txt)};
  window.KB_APPLY_HEAD_DEBUG=(root,mixer,actor)=>{const bones=[];root.traverse(o=>{if(o.isBone)bones.push(o)});const head=bones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name)),neck=bones.find(o=>/(mixamorigNeck|^neck$|neck)/i.test(o.name)),base=mixer.update.bind(mixer);mixer.update=(dt)=>{base(dt);if(actor==="warrior"&&head){head.rotation.x+=THREE.MathUtils.degToRad(-21);head.rotation.y+=THREE.MathUtils.degToRad(1)}if(actor==="swordsman"&&head){
- const targetQ=head.quaternion.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(-21),THREE.MathUtils.degToRad(24),0,"XYZ")));
- const prev=head.userData.kbSmoothHeadQ;
- if(!prev)head.userData.kbSmoothHeadQ=targetQ.clone();
- else{prev.slerp(targetQ,1-Math.exp(-dt*18));head.quaternion.copy(prev)}
+ // Suppress the large nodding authored into Combat Stance while idle.
+ // Capture a stable head basis once, then hold the calibrated look direction.
+ const isAttacking=typeof swordAttacking!=="undefined"&&swordAttacking;
+ if(!isAttacking){
+   if(!head.userData.kbIdleBaseQ)head.userData.kbIdleBaseQ=head.quaternion.clone();
+   const fixedOffset=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(-21),THREE.MathUtils.degToRad(24),0,"XYZ"));
+   const targetQ=head.userData.kbIdleBaseQ.clone().multiply(fixedOffset);
+   const prev=head.userData.kbStableHeadQ||targetQ.clone();
+   prev.slerp(targetQ,1-Math.exp(-dt*22));head.userData.kbStableHeadQ=prev;head.quaternion.copy(prev);
+ }else{
+   head.userData.kbIdleBaseQ=null;head.userData.kbStableHeadQ=null;
+ }
 }if(state.actor!==actor)return;const bone=document.querySelector("#hdBone")?.value==="neck"?(neck||head):(head||neck);if(!bone)return;bone.position.x+=state.x;bone.position.y+=state.y;bone.position.z+=state.z;bone.rotation.x+=THREE.MathUtils.degToRad(state.rx);bone.rotation.y+=THREE.MathUtils.degToRad(state.ry);bone.rotation.z+=THREE.MathUtils.degToRad(state.rz);bone.updateMatrixWorld(true)}};
 }
 function setupSwordsman3D(){
