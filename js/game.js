@@ -11,7 +11,7 @@ function setIconInstant(im,src){
  if(cached&&cached.complete&&cached.naturalWidth){im.src=cached.src;return}
  const next=cached||new Image();next.src=src;iconCache.set(src,next);
  if(next.decode)next.decode().catch(()=>{}).finally(()=>{im.src=src});else im.src=src;
-}function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupHeadDebug(){return;
+}function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupHeadDebug(){
  if(document.querySelector("#headBoneDebug"))return;
  const state={actor:"swordsman",x:0,y:0,z:0,rx:0,ry:0,rz:0};window.KB_HEAD_DEBUG=state;
  const p=document.createElement("div");p.id="headBoneDebug";p.innerHTML='<b>HEAD / NECK DEBUG</b><label>Actor <select id="hdActor"><option value="swordsman" selected>Swordsman</option><option value="warrior">Warrior</option></select></label><label>Bone <select id="hdBone"><option value="head">Head</option><option value="neck">Neck</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="hdReset">Reset</button><button id="hdCopy">Copy Values</button></div><pre id="hdOut"></pre>';document.body.appendChild(p);
@@ -175,7 +175,7 @@ function setupWarrior3D(){
  },undefined,e=>console.error("KB warrior load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(warriorMixer)warriorMixer.update(Math.min(warriorClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
-function setupBowDebug(bow){return;
+function setupBowDebug(bow){
  if(document.querySelector("#bowDebug"))return;
  const d={x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1};window.KB_BOW_DEBUG=d;
  const basePos=bow.position.clone(),baseRot=bow.rotation.clone(),baseScale=bow.scale.clone();
@@ -185,7 +185,7 @@ function setupBowDebug(bow){return;
  p.querySelector("#bowReset").onclick=()=>{Object.assign(d,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});p.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};
  p.querySelector("#bowCopy").onclick=()=>{const txt="Archer Bow "+JSON.stringify(d);p.querySelector("#bowOut").textContent=txt;navigator.clipboard?.writeText(txt)};
 }
-function setupArrowDebug(arrow){return;
+function setupArrowDebug(arrow){
  if(document.querySelector("#arrowDebug"))return;
  const d={x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1};window.KB_ARROW_DEBUG=d;
  const basePos=arrow.position.clone(),baseRot=arrow.rotation.clone(),baseScale=arrow.scale.clone();
