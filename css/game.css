@@ -326,3 +326,8 @@ body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
    Relative to V128: left 11 grids (-220px), up 4.5 grids (-90px). */
 .units .unit:nth-child(3){left:80px!important;top:-62px!important}
 @media(max-width:430px){.units .unit:nth-child(3){left:-14px!important;top:-62px!important}}
+
+/* V131 Knight debugger; Horse debugger removed */
+#horseDebug{display:none!important}
+#knightDebug{position:fixed;right:8px;top:40px;z-index:63000;width:265px;padding:10px;background:#111e;color:#fff;border:1px solid #ff5555;border-radius:8px;font:11px/1.25 monospace}
+#knightDebug>b{display:block;margin-bottom:7px;color:#ff7777}#knightDebug label{display:grid;grid-template-columns:58px 1fr 40px;gap:4px;align-items:center;margin:4px 0}#knightDebug input,#knightDebug select{width:100%}#knightDebug output{text-align:right}#knightDebug button{margin:6px 5px 0 0;font-size:10px}#knightDebug pre{font-size:9px;white-space:pre-wrap}
