@@ -331,3 +331,11 @@ body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
 #horseDebug{display:none!important}
 #knightDebug{position:fixed;right:8px;top:40px;z-index:63000;width:265px;padding:10px;background:#111e;color:#fff;border:1px solid #ff5555;border-radius:8px;font:11px/1.25 monospace}
 #knightDebug>b{display:block;margin-bottom:7px;color:#ff7777}#knightDebug label{display:grid;grid-template-columns:58px 1fr 40px;gap:4px;align-items:center;margin:4px 0}#knightDebug input,#knightDebug select{width:100%}#knightDebug output{text-align:right}#knightDebug button{margin:6px 5px 0 0;font-size:10px}#knightDebug pre{font-size:9px;white-space:pre-wrap}
+
+/* V133: transform debugger removed; every-bone Knight debugger */
+#knightDebug{display:none!important}
+#knightBoneDebug{position:fixed;right:8px;top:40px;z-index:63000;width:285px;padding:10px;background:#111e;color:#fff;border:1px solid #ff5555;border-radius:8px;font:11px/1.25 monospace}
+#knightBoneDebug>b{display:block;margin-bottom:7px;color:#ff7777}
+#knightBoneDebug label{display:grid;grid-template-columns:42px 1fr 40px;gap:4px;align-items:center;margin:5px 0}
+#knightBoneDebug select,#knightBoneDebug input{width:100%}#knightBoneDebug output{text-align:right}
+#knightBoneDebug button{margin:6px 5px 0 0;font-size:10px}#knightBoneDebug pre{font-size:9px;white-space:pre-wrap}
