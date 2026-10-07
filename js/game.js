@@ -11,7 +11,17 @@ function setIconInstant(im,src){
  if(cached&&cached.complete&&cached.naturalWidth){im.src=cached.src;return}
  const next=cached||new Image();next.src=src;iconCache.set(src,next);
  if(next.decode)next.decode().catch(()=>{}).finally(()=>{im.src=src});else im.src=src;
-}function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupSwordsman3D(){
+}function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupHeadDebug(){
+ if(document.querySelector("#headBoneDebug"))return;
+ const state={actor:"swordsman",x:0,y:0,z:0,rx:0,ry:0,rz:0};window.KB_HEAD_DEBUG=state;
+ const p=document.createElement("div");p.id="headBoneDebug";p.innerHTML='<b>HEAD / NECK DEBUG</b><label>Actor <select id="hdActor"><option value="swordsman">Swordsman</option><option value="warrior">Warrior</option></select></label><label>Bone <select id="hdBone"><option value="head">Head</option><option value="neck">Neck</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="hdReset">Reset</button><button id="hdCopy">Copy Values</button></div><pre id="hdOut"></pre>';document.body.appendChild(p);
+ const zero=()=>{["x","y","z","rx","ry","rz"].forEach(k=>state[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
+ p.querySelector("#hdActor").onchange=e=>{state.actor=e.target.value;zero()};p.querySelector("#hdBone").onchange=()=>zero();
+ p.querySelectorAll("input").forEach(i=>i.oninput=()=>{state[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
+ p.querySelector("#hdReset").onclick=zero;p.querySelector("#hdCopy").onclick=()=>{const txt=(state.actor==="swordsman"?"Swordsman":"Warrior")+" "+p.querySelector("#hdBone").value+" "+JSON.stringify(state);p.querySelector("#hdOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+ window.KB_APPLY_HEAD_DEBUG=(root,mixer,actor)=>{const bones=[];root.traverse(o=>{if(o.isBone)bones.push(o)});const head=bones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name)),neck=bones.find(o=>/(mixamorigNeck|^neck$|neck)/i.test(o.name)),base=mixer.update.bind(mixer);mixer.update=(dt)=>{base(dt);if(state.actor!==actor)return;const bone=document.querySelector("#hdBone")?.value==="neck"?(neck||head):(head||neck);if(!bone)return;bone.position.x+=state.x;bone.position.y+=state.y;bone.position.z+=state.z;bone.rotation.x+=THREE.MathUtils.degToRad(state.rx);bone.rotation.y+=THREE.MathUtils.degToRad(state.ry);bone.rotation.z+=THREE.MathUtils.degToRad(state.rz);bone.updateMatrixWorld(true)}};
+}
+function setupSwordsman3D(){
  const host=document.querySelector("#swordsman3d");if(!host||host.dataset.three)return;
  host.dataset.three="1";host.innerHTML="";host.classList.add("swordsman3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true});const makeLoader=()=>new GLTFLoader();
@@ -28,7 +38,7 @@ function setIconInstant(im,src){
   // Previously it used the post-scale size, so every model enlargement moved the camera back by the same ratio and visually cancelled the scale change.
   const baselineHeight=size.y/1.11288375;
   const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(baselineHeight*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,baselineHeight*.5,dist);cam.lookAt(0,baselineHeight*.5,0);
-  swordMixer=new THREE.AnimationMixer(sword3D);const clips=g.animations||[],idleClips=clips.filter(a=>/idle/i.test(a.name));
+  swordMixer=new THREE.AnimationMixer(sword3D);setupHeadDebug();window.KB_APPLY_HEAD_DEBUG(sword3D,swordMixer,"swordsman");const clips=g.animations||[],idleClips=clips.filter(a=>/idle/i.test(a.name));
   swordIdle=clips.find(a=>/combat[ _-]*stance/i.test(a.name))||idleClips[0]||null;swordAttack=clips.find(a=>/attack|slash|sword|strike|melee|swing/i.test(a.name))||null;
   if(swordIdle)swordMixer.clipAction(swordIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();swordReady=true;
   const bones=[];sword3D.traverse(o=>{if(o.isBone)bones.push(o)});
@@ -76,7 +86,7 @@ function setupWarrior3D(){
  warrior3D.position.set(-rc.x,-raw.min.y,-rc.z);warrior3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;warrior3D.scale.setScalar(4.158/Math.max(rs.y,.001));
  const fit=new THREE.Box3().setFromObject(warrior3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());warrior3D.position.x-=center.x;warrior3D.position.y-=fit.min.y;
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
- warriorMixer=new THREE.AnimationMixer(warrior3D);const clips=g.animations||[];window.KB_WARRIOR_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_WARRIOR_ANIMATIONS);warriorIdle=clips.find(a=>a.name==="Idle_5")||clips.find(a=>a.name.replace(/[ _-]/g,"").toLowerCase()==="idle5")||null;console.info("KB Warrior animations:",clips.map(a=>a.name),"selected idle:",warriorIdle?.name);warriorAttack=clips.find(a=>a.name==="Axe_Spin_Attack")||clips.find(a=>/attack/i.test(a.name))||null;
+ warriorMixer=new THREE.AnimationMixer(warrior3D);setupHeadDebug();window.KB_APPLY_HEAD_DEBUG(warrior3D,warriorMixer,"warrior");const clips=g.animations||[];window.KB_WARRIOR_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_WARRIOR_ANIMATIONS);warriorIdle=clips.find(a=>a.name==="Idle_5")||clips.find(a=>a.name.replace(/[ _-]/g,"").toLowerCase()==="idle5")||null;console.info("KB Warrior animations:",clips.map(a=>a.name),"selected idle:",warriorIdle?.name);warriorAttack=clips.find(a=>a.name==="Axe_Spin_Attack")||clips.find(a=>/attack/i.test(a.name))||null;
  if(warriorIdle)warriorMixer.clipAction(warriorIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();warriorReady=true;
  const bones=[];warrior3D.traverse(o=>{if(o.isBone)bones.push(o)});const rightHand=bones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  loader.load("./Axe_512.glb",ag=>{
@@ -152,16 +162,6 @@ function setupWarrior3D(){
  },undefined,e=>console.error("KB warrior load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(warriorMixer)warriorMixer.update(Math.min(warriorClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
-function setupArcherHandDebug(dbg){
- let p=document.querySelector("#archerBoneDebug");if(p)return;
- p=document.createElement("div");p.id="archerBoneDebug";p.innerHTML='<b>ARCHER ARM BONE DEBUG</b><label>Bone <select id="archDbgBone"><option value="head" selected>Head</option><option value="neck">Neck</option><option value="shoulder">RightShoulder</option><option value="upperarm">RightUpperArm</option><option value="elbow">RightForeArm / Elbow</option><option value="hand">RightHand</option></select></label><label>Animation <select id="archDbgAnim"><option value="idle">Archery Shot 2</option><option value="attack">Archery Shot 3</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="archDbgReset">Reset</button><button id="archDbgCopy">Copy Values</button></div><pre id="archDbgOut"></pre>';
- document.body.appendChild(p);
- p.querySelector("#archDbgBone").onchange=e=>{dbg.target=e.target.value;["x","y","z","rx","ry","rz"].forEach(k=>dbg[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
- p.querySelectorAll("input").forEach(i=>i.oninput=()=>{dbg[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
- p.querySelector("#archDbgAnim").onchange=e=>{if(e.target.value==="attack")playArcherAttack();else if(archerMixer&&archerIdle){archerMixer.stopAllAction();archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play()}};
- p.querySelector("#archDbgReset").onclick=()=>{Object.keys(dbg).forEach(k=>dbg[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
- p.querySelector("#archDbgCopy").onclick=()=>{const txt="Archer "+({head:"Head",neck:"Neck",shoulder:"RightShoulder",upperarm:"RightUpperArm",elbow:"RightForeArm/Elbow",hand:"RightHand"}[dbg.target]||dbg.target)+" "+JSON.stringify(dbg);p.querySelector("#archDbgOut").textContent=txt;navigator.clipboard?.writeText(txt)};
-}
 function setupArcher3D(){
  const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true}),loader=new GLTFLoader();
@@ -176,16 +176,11 @@ function setupArcher3D(){
  const norm=s=>(s||"").replace(/[ _-]/g,"").toLowerCase();archerIdle=clips.find(a=>norm(a.name)==="archeryshot2")||null;archerAttack=clips.find(a=>norm(a.name)==="archeryshot3")||null;
  // V105 manual Archer RightHand debug controller.
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
- const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
- const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
  const archerRightShoulder=archerBones.find(o=>/(mixamorigRightShoulder|right.*shoulder|shoulder.*r)/i.test(o.name))||null;
- const archerRightUpperArm=archerBones.find(o=>/(mixamorigRightArm|right.*upperarm|right.*arm|upperarm.*r)/i.test(o.name))||null;
- const archerNeck=archerBones.find(o=>/(mixamorigNeck|^neck$|neck)/i.test(o.name))||null;
+ const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
  const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
- const dbg={target:"head",x:0,y:0,z:0,rx:0,ry:0,rz:0},originalMixerUpdate=archerMixer.update.bind(archerMixer);
- if(archerRightHand)archerMixer.update=(dt)=>{originalMixerUpdate(dt);if(archerRightShoulder)archerRightShoulder.rotation.x+=THREE.MathUtils.degToRad(39);if(archerRightElbow)archerRightElbow.rotation.x+=THREE.MathUtils.degToRad(-9);if(archerHead){archerHead.rotation.x+=THREE.MathUtils.degToRad(-21);archerHead.rotation.y+=THREE.MathUtils.degToRad(30)}const bone=dbg.target==="head"?(archerHead||archerNeck||archerRightHand):dbg.target==="neck"?(archerNeck||archerHead||archerRightHand):dbg.target==="shoulder"?(archerRightShoulder||archerRightUpperArm||archerRightHand):dbg.target==="upperarm"?(archerRightUpperArm||archerRightHand):dbg.target==="elbow"?(archerRightElbow||archerRightHand):archerRightHand;bone.position.x+=dbg.x;bone.position.y+=dbg.y;bone.position.z+=dbg.z;bone.rotation.x+=THREE.MathUtils.degToRad(dbg.rx);bone.rotation.y+=THREE.MathUtils.degToRad(dbg.ry);bone.rotation.z+=THREE.MathUtils.degToRad(dbg.rz);bone.updateMatrixWorld(true)};
- window.KB_ARCHER_HAND_DEBUG=dbg;
- setupArcherHandDebug(dbg);
+ const archerBaseUpdate=archerMixer.update.bind(archerMixer);
+ archerMixer.update=(dt)=>{archerBaseUpdate(dt);if(archerRightShoulder)archerRightShoulder.rotation.x+=THREE.MathUtils.degToRad(39);if(archerRightElbow)archerRightElbow.rotation.x+=THREE.MathUtils.degToRad(-9);if(archerHead){archerHead.rotation.x+=THREE.MathUtils.degToRad(-21);archerHead.rotation.y+=THREE.MathUtils.degToRad(30)}};
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(archerMixer)archerMixer.update(Math.min(archerClock.getDelta(),.05));ren.render(scene,cam)}loop();
