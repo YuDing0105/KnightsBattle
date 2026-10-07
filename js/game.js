@@ -290,13 +290,13 @@ function setupHorse3D(){
    const ride=clips.find(a=>a.name==="01a11651-1a6a-7697-9066-bf9090227d00")||clips[2]||clips[0];knightIdle=ride;knightAttack=clips.find(a=>/ride[ _-]*attack/i.test(a.name))||clips.find(a=>/attack/i.test(a.name))||clips[3]||null;console.info("KB Knight idle:",knightIdle?.name,"attack:",knightAttack?.name);if(ride){const rideAction=knightMixer.clipAction(ride);rideAction.reset().enabled=true;rideAction.setEffectiveWeight(1);rideAction.setEffectiveTimeScale(1);rideAction.setLoop(THREE.LoopRepeat,Infinity);rideAction.clampWhenFinished=false;rideAction.play();}
    const bones=[];knight.traverse(o=>{if(o.isBone)bones.push(o)});
    window.KB_KNIGHT_BONES=bones.map((b,i)=>({index:i,name:b.name}));
-   const kRightArm=bones.find(b=>/(mixamorig:?RightArm$|right.*upperarm)/i.test(b.name))||null;
+   const kRightShoulder=bones.find(b=>/(mixamorig:?RightShoulder$|right.*shoulder)/i.test(b.name))||null;const kRightArm=bones.find(b=>/(mixamorig:?RightArm$|right.*upperarm)/i.test(b.name))||null;
    const kRightFore=bones.find(b=>/(mixamorig:?RightForeArm$|right.*forearm)/i.test(b.name))||null;
    const kRightHand=bones.find(b=>/(mixamorig:?RightHand$|right.*hand)/i.test(b.name))||null;
-   const thrustCfg={name:"Mounted_Spear_Thrust_v1",duration:.72,armRX:-8,armRY:0,armRZ:-5,foreRX:-18,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0,reach:.12};
-   knightThrust={cfg:thrustCfg,active:false,t:0,arm:kRightArm,fore:kRightFore,hand:kRightHand};
+   const thrustCfg={name:"Mounted_Shoulder_Attack_v2",duration:.72,shoulderRX:0,shoulderRY:-18,shoulderRZ:10,armRX:-6,armRY:-12,armRZ:-4,foreRX:-8,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0};
+   knightThrust={cfg:thrustCfg,active:false,t:0,shoulder:kRightShoulder,arm:kRightArm,fore:kRightFore,hand:kRightHand};
    window.KB_KNIGHT_THRUST=knightThrust;
-   const ap=document.createElement("div");ap.id="knightAttackDebug";ap.innerHTML='<b>Mounted_Spear_Thrust_v1</b>'+["duration","armRX","armRY","armRZ","foreRX","foreRY","foreRZ","handRX","handRY","handRZ","reach"].map(k=>'<label>'+k+' <input data-k="'+k+'" type="range" min="'+(k==="duration"?".3":k==="reach"?"-.5":"-90")+'" max="'+(k==="duration"?"1.5":k==="reach"?".5":"90")+'" step="'+(k==="duration"||k==="reach"?".01":"1")+'" value="'+thrustCfg[k]+'"><output>'+thrustCfg[k]+'</output></label>').join("")+'<div><button id="katPlay">Play Attack</button><button id="katCopy">Copy Values</button></div><pre id="katOut"></pre>';document.body.appendChild(ap);
+   const ap=document.createElement("div");ap.id="knightAttackDebug";ap.innerHTML='<b>Mounted_Shoulder_Attack_v2</b>'+["duration","shoulderRX","shoulderRY","shoulderRZ","armRX","armRY","armRZ","foreRX","foreRY","foreRZ","handRX","handRY","handRZ"].map(k=>'<label>'+k+' <input data-k="'+k+'" type="range" min="'+(k==="duration"?".3":k==="reach"?"-.5":"-90")+'" max="'+(k==="duration"?"1.5":k==="reach"?".5":"90")+'" step="'+(k==="duration"||k==="reach"?".01":"1")+'" value="'+thrustCfg[k]+'"><output>'+thrustCfg[k]+'</output></label>').join("")+'<div><button id="katPlay">Play Attack</button><button id="katCopy">Copy Values</button></div><pre id="katOut"></pre>';document.body.appendChild(ap);
    ap.querySelectorAll("input").forEach(i=>i.oninput=()=>{thrustCfg[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
    ap.querySelector("#katPlay").onclick=()=>playKnightAttack();ap.querySelector("#katCopy").onclick=()=>{const txt="Knight Attack "+JSON.stringify(thrustCfg);ap.querySelector("#katOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    const bd={boneIndex:0,rx:0,ry:0,rz:0};window.KB_KNIGHT_BONE_DEBUG=bd;
@@ -357,10 +357,10 @@ function setupHorse3D(){
      if(knightThrust&&knightThrust.active){
        knightThrust.t+=dt;const cfg=knightThrust.cfg,u=Math.min(1,knightThrust.t/cfg.duration);
        // 0->1 thrust, brief hold, 1->0 recovery. Smooth and body-stable.
-       const w=u<.42?THREE.MathUtils.smoothstep(u/.42,0,1):u<.58?1:1-THREE.MathUtils.smoothstep((u-.58)/.42,0,1);
-       const apply=(bone,rx,ry,rz)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx*w),THREE.MathUtils.degToRad(ry*w),THREE.MathUtils.degToRad(rz*w),"XYZ")))};
-       apply(knightThrust.arm,cfg.armRX,cfg.armRY,cfg.armRZ);apply(knightThrust.fore,cfg.foreRX,cfg.foreRY,cfg.foreRZ);apply(knightThrust.hand,cfg.handRX,cfg.handRY,cfg.handRZ);
-       if(knightThrust.hand)knightThrust.hand.position.z+=cfg.reach*w;
+       const phase=u<.28?-THREE.MathUtils.smoothstep(u/.28,0,1)*.55:u<.62?THREE.MathUtils.lerp(-.55,1,THREE.MathUtils.smoothstep((u-.28)/.34,0,1)):1-THREE.MathUtils.smoothstep((u-.62)/.38,0,1);
+       const apply=(bone,rx,ry,rz)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx*phase),THREE.MathUtils.degToRad(ry*phase),THREE.MathUtils.degToRad(rz*phase),"XYZ")))};
+       apply(knightThrust.shoulder,cfg.shoulderRX,cfg.shoulderRY,cfg.shoulderRZ);apply(knightThrust.arm,cfg.armRX,cfg.armRY,cfg.armRZ);apply(knightThrust.fore,cfg.foreRX,cfg.foreRY,cfg.foreRZ);apply(knightThrust.hand,cfg.handRX,cfg.handRY,cfg.handRZ);
+       
        if(u>=1)knightThrust.active=false;
      }
    };
