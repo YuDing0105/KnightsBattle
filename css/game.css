@@ -339,3 +339,7 @@ body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
 #knightBoneDebug label{display:grid;grid-template-columns:42px 1fr 40px;gap:4px;align-items:center;margin:5px 0}
 #knightBoneDebug select,#knightBoneDebug input{width:100%}#knightBoneDebug output{text-align:right}
 #knightBoneDebug button{margin:6px 5px 0 0;font-size:10px}#knightBoneDebug pre{font-size:9px;white-space:pre-wrap}
+
+/* V143 procedural Knight spear-thrust debugger */
+#knightAttackDebug{position:fixed;right:305px;top:40px;z-index:63000;width:285px;padding:10px;background:#111e;color:#fff;border:1px solid #f0c45b;border-radius:8px;font:10px/1.2 monospace}
+#knightAttackDebug>b{display:block;color:#f0c45b;margin-bottom:6px}#knightAttackDebug label{display:grid;grid-template-columns:65px 1fr 38px;gap:4px;align-items:center;margin:3px 0}#knightAttackDebug input{width:100%}#knightAttackDebug output{text-align:right}#knightAttackDebug button{margin:6px 4px 0 0;font-size:10px}#knightAttackDebug pre{font-size:9px;white-space:pre-wrap}
