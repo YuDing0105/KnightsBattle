@@ -302,7 +302,7 @@ function setupHorse3D(){
     sp.querySelectorAll("input").forEach(i=>i.oninput=()=>{sd[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value;apply()});sp.querySelector("#spReset").onclick=()=>{Object.assign(sd,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});sp.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};sp.querySelector("#spCopy").onclick=()=>{const txt="Knight Spear "+JSON.stringify(sd);sp.querySelector("#spOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    },undefined,e=>console.error("KB spear load failed",e));
    const thrustCfg={name:"Mounted_Shoulder_Attack_v2",duration:.93,shoulderRX:0,shoulderRY:28,shoulderRZ:30,armRX:-6,armRY:-12,armRZ:-4,foreRX:-8,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0};
-   knightThrust={cfg:thrustCfg,active:false,t:0,shoulder:kRightShoulder,arm:kRightArm,fore:kRightFore,hand:kRightHand};
+   knightThrust={cfg:thrustCfg,active:false,t:0,shoulder:kRightShoulder,arm:kRightArm,fore:kRightFore,hand:kRightHand};knightThrust.smoothPhase=0;
    window.KB_KNIGHT_THRUST=knightThrust;
    const ap=document.createElement("div");ap.id="knightAttackDebug";ap.innerHTML='<b>Mounted_Shoulder_Attack_v2</b>'+["duration","shoulderRX","shoulderRY","shoulderRZ","armRX","armRY","armRZ","foreRX","foreRY","foreRZ","handRX","handRY","handRZ"].map(k=>'<label>'+k+' <input data-k="'+k+'" type="range" min="'+(k==="duration"?".3":k==="reach"?"-.5":"-90")+'" max="'+(k==="duration"?"1.5":k==="reach"?".5":"90")+'" step="'+(k==="duration"||k==="reach"?".01":"1")+'" value="'+thrustCfg[k]+'"><output>'+thrustCfg[k]+'</output></label>').join("")+'<div><button id="katPlay">Play Attack</button><button id="katCopy">Copy Values</button></div><pre id="katOut"></pre>';/* V148 old attack debugger hidden */
    ap.querySelectorAll("input").forEach(i=>{
@@ -371,8 +371,10 @@ function setupHorse3D(){
      if(knightThrust&&knightThrust.active){
        knightThrust.t+=dt;const cfg=knightThrust.cfg,u=Math.min(1,knightThrust.t/cfg.duration);
        // 0->1 thrust, brief hold, 1->0 recovery. Smooth and body-stable.
-       const phase=u<.28?-THREE.MathUtils.smoothstep(u/.28,0,1)*.55:u<.62?THREE.MathUtils.lerp(-.55,1,THREE.MathUtils.smoothstep((u-.28)/.34,0,1)):1-THREE.MathUtils.smoothstep((u-.62)/.38,0,1);
-       const apply=(bone,rx,ry,rz)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx*phase),THREE.MathUtils.degToRad(ry*phase),THREE.MathUtils.degToRad(rz*phase),"XYZ")))};
+       const targetPhase=u<.28?-THREE.MathUtils.smoothstep(u/.28,0,1)*.55:u<.62?THREE.MathUtils.lerp(-.55,1,THREE.MathUtils.smoothstep((u-.28)/.34,0,1)):1-THREE.MathUtils.smoothstep((u-.62)/.38,0,1);
+       // Critically damp phase changes so no one-frame jump reaches shoulder/arm/hand.
+       const pa=1-Math.exp(-Math.min(dt,1/60)*18);knightThrust.smoothPhase=THREE.MathUtils.lerp(knightThrust.smoothPhase,targetPhase,pa);const phase=knightThrust.smoothPhase;
+       const apply=(bone,rx,ry,rz)=>{if(!bone)return;const dq=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx*phase),THREE.MathUtils.degToRad(ry*phase),THREE.MathUtils.degToRad(rz*phase),"XYZ"));bone.quaternion.multiply(dq)};
        apply(knightThrust.shoulder,cfg.shoulderRX,cfg.shoulderRY,cfg.shoulderRZ);apply(knightThrust.arm,cfg.armRX,cfg.armRY,cfg.armRZ);apply(knightThrust.fore,cfg.foreRX,cfg.foreRY,cfg.foreRZ);apply(knightThrust.hand,cfg.handRX,cfg.handRY,cfg.handRZ);
        
        if(u>=1)knightThrust.active=false;
@@ -384,7 +386,7 @@ function setupHorse3D(){
 }
 function playKnightAttack(){
  if(!knight3D||!knightMixerGlobal||!knightThrust)return;if(knightAttacking){knightAttackQueued=true;return}knightAttacking=true;
- knightThrust.t=0;knightThrust.active=true;
+ knightThrust.t=0;knightThrust.smoothPhase=0;knightThrust.active=true;
  const finish=()=>{if(knightThrust&&knightThrust.active){requestAnimationFrame(finish);return}knightAttacking=false;if(knightAttackQueued){knightAttackQueued=false;playKnightAttack()}};
  requestAnimationFrame(finish);
 }
