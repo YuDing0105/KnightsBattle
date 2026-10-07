@@ -340,10 +340,10 @@ function setupHorse3D(){
      }
      baseUpdate(step);
      if(!knightAttacking){
-       const alpha=1-Math.exp(-step*6.5);
+       const alpha=1-Math.exp(-step*5.2);
        bones.forEach(b=>{const s=idleSmooth.get(b);if(!s)return;
-         if(s.p.distanceTo(b.position)<0.35)s.p.lerp(b.position,alpha);
-         const angle=s.q.angleTo(b.quaternion);const qa=angle>THREE.MathUtils.degToRad(18)?Math.min(alpha,.08):alpha;s.q.slerp(b.quaternion,qa);
+         const pd=s.p.distanceTo(b.position);if(pd<0.22)s.p.lerp(b.position,alpha);else if(pd<0.6)s.p.lerp(b.position,Math.min(alpha,.04));
+         const angle=s.q.angleTo(b.quaternion);const maxStep=THREE.MathUtils.degToRad(3.5),qa=angle>.0001?Math.min(alpha,maxStep/angle):alpha;s.q.slerp(b.quaternion,qa);
          if(loopBlend>0){
            // Increase damping near the loop seam so the end pose converges gently instead of snapping to frame 0.
            const seam=1-loopBlend*.72;
