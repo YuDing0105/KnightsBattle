@@ -287,7 +287,7 @@ function setupHorse3D(){
   const fit=new THREE.Box3().setFromObject(horse),sz=fit.getSize(new THREE.Vector3()),ct=fit.getCenter(new THREE.Vector3());horse.position.x-=ct.x;horse.position.y-=fit.min.y;const vf=THREE.MathUtils.degToRad(cam.fov),dist=(sz.y*.8)/Math.tan(vf/2);cam.position.set(dist*.75,sz.y*.5,dist);cam.lookAt(0,sz.y*.5,0);
   loader.load("./Knight_512.glb",kg=>{const knight=kg.scene;knight3D=knight;horse.add(knight);const kb=new THREE.Box3().setFromObject(knight),ks=kb.getSize(new THREE.Vector3()),kc=kb.getCenter(new THREE.Vector3());knight.scale.setScalar((sz.y*.72)/Math.max(ks.y,.001));knight.position.set(-kc.x-0.06,sz.y*.58-2.36,-kc.z-0.3);knight.rotation.set(0,0,0);knight.scale.multiplyScalar(1.8);
    knightMixer=new THREE.AnimationMixer(knight);knightMixerGlobal=knightMixer;const clips=kg.animations||[];window.KB_KNIGHT_ANIMATIONS=clips.map((a,i)=>({index:i,name:a.name,duration:a.duration}));console.table(window.KB_KNIGHT_ANIMATIONS);
-   const ride=clips.find(a=>a.name==="01a11651-1a6a-7697-9066-bf9090227d00")||clips[2]||clips[0];knightIdle=ride;knightAttack=clips.find(a=>/ride[ _-]*attack/i.test(a.name))||clips.find(a=>/attack/i.test(a.name))||clips[3]||null;console.info("KB Knight idle:",knightIdle?.name,"attack:",knightAttack?.name);if(ride){const rideAction=knightMixer.clipAction(ride);rideAction.reset().enabled=true;rideAction.setLoop(THREE.LoopRepeat,Infinity);rideAction.clampWhenFinished=false;rideAction.play();}
+   const ride=clips.find(a=>a.name==="01a11651-1a6a-7697-9066-bf9090227d00")||clips[2]||clips[0];knightIdle=ride;knightAttack=clips.find(a=>/ride[ _-]*attack/i.test(a.name))||clips.find(a=>/attack/i.test(a.name))||clips[3]||null;console.info("KB Knight idle:",knightIdle?.name,"attack:",knightAttack?.name);if(ride){const rideAction=knightMixer.clipAction(ride);rideAction.reset().enabled=true;rideAction.setEffectiveWeight(1);rideAction.setEffectiveTimeScale(1);rideAction.setLoop(THREE.LoopRepeat,Infinity);rideAction.clampWhenFinished=false;rideAction.play();}
    const bones=[];knight.traverse(o=>{if(o.isBone)bones.push(o)});
    window.KB_KNIGHT_BONES=bones.map((b,i)=>({index:i,name:b.name}));
    const bd={boneIndex:0,rx:0,ry:0,rz:0};window.KB_KNIGHT_BONE_DEBUG=bd;
@@ -301,16 +301,12 @@ function setupHorse3D(){
    p.querySelector("#kbCopy").onclick=()=>{const b=bones[bd.boneIndex],txt="Knight Bone "+JSON.stringify({index:bd.boneIndex,name:b?.name||"",rx:bd.rx,ry:bd.ry,rz:bd.rz});p.querySelector("#kbOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    const hips=bones.find(b=>b.name==="mixamorigHips"),neck=bones.find(b=>/mixamorig:?Neck|^Neck$/i.test(b.name)),head=bones.find(b=>/mixamorig:?Head$|^Head$/i.test(b.name));
    const hipsOffsetQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(26),0,0,"XYZ"));
-   // Capture the complete Ride Idle skeleton pose. Idle keeps this pose stable; attack is allowed to animate freely.
-   const idlePose=new Map();bones.forEach(b=>idlePose.set(b,{p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));
+   // Use the actual Ride Idle clip. Stabilize its playback timing instead of freezing/replacing its pose.
    const baseUpdate=knightMixer.update.bind(knightMixer);
    knightMixer.update=dt=>{
-     baseUpdate(dt);
-     if(!knightAttacking){
-       // Remove twitch from the UUID Ride Idle clip by holding its initial skeletal pose.
-       // The Knight remains mounted and visually stable instead of repeatedly snapping/nodding.
-       bones.forEach(b=>{const v=idlePose.get(b);if(v){b.position.copy(v.p);b.quaternion.copy(v.q);b.scale.copy(v.s)}});
-     }
+     // Clamp mixer step to prevent animation jumps after frame stalls/tab scheduling.
+     baseUpdate(Math.min(dt,1/60));
+     // Preserve the confirmed rider posture correction on top of BOTH Ride Idle and Ride Attack.
      if(hips)hips.quaternion.multiply(hipsOffsetQ);
      const b=bones[bd.boneIndex];
      if(b){
