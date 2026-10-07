@@ -343,3 +343,7 @@ body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
 /* V143 procedural Knight spear-thrust debugger */
 #knightAttackDebug{position:fixed;right:305px;top:40px;z-index:63000;width:285px;padding:10px;background:#111e;color:#fff;border:1px solid #f0c45b;border-radius:8px;font:10px/1.2 monospace}
 #knightAttackDebug>b{display:block;color:#f0c45b;margin-bottom:6px}#knightAttackDebug label{display:grid;grid-template-columns:65px 1fr 38px;gap:4px;align-items:center;margin:3px 0}#knightAttackDebug input{width:100%}#knightAttackDebug output{text-align:right}#knightAttackDebug button{margin:6px 4px 0 0;font-size:10px}#knightAttackDebug pre{font-size:9px;white-space:pre-wrap}
+
+/* V146 per-slider reset controls */
+#knightAttackDebug label{grid-template-columns:65px 1fr 38px 24px!important}
+#knightAttackDebug .katSliderReset{margin:0!important;padding:1px 3px!important;min-width:22px;height:20px;font-size:12px;line-height:1}
