@@ -340,10 +340,10 @@ function setupHorse3D(){
      }
      baseUpdate(step);
      if(!knightAttacking){
-       const alpha=1-Math.exp(-step*9);
+       const alpha=1-Math.exp(-step*6.5);
        bones.forEach(b=>{const s=idleSmooth.get(b);if(!s)return;
          if(s.p.distanceTo(b.position)<0.35)s.p.lerp(b.position,alpha);
-         s.q.slerp(b.quaternion,alpha);
+         const angle=s.q.angleTo(b.quaternion);const qa=angle>THREE.MathUtils.degToRad(18)?Math.min(alpha,.08):alpha;s.q.slerp(b.quaternion,qa);
          if(loopBlend>0){
            // Increase damping near the loop seam so the end pose converges gently instead of snapping to frame 0.
            const seam=1-loopBlend*.72;
@@ -371,9 +371,9 @@ function setupHorse3D(){
      if(knightThrust&&knightThrust.active){
        knightThrust.t+=dt;const cfg=knightThrust.cfg,u=Math.min(1,knightThrust.t/cfg.duration);
        // 0->1 thrust, brief hold, 1->0 recovery. Smooth and body-stable.
-       const targetPhase=u<.28?-THREE.MathUtils.smoothstep(u/.28,0,1)*.55:u<.62?THREE.MathUtils.lerp(-.55,1,THREE.MathUtils.smoothstep((u-.28)/.34,0,1)):1-THREE.MathUtils.smoothstep((u-.62)/.38,0,1);
+       const targetPhase=u<.24?-THREE.MathUtils.smoothstep(u/.24,0,1)*.85:u<.34?-.85:u<.58?THREE.MathUtils.lerp(-.85,1.15,THREE.MathUtils.smoothstep((u-.34)/.24,0,1)):1.15*(1-THREE.MathUtils.smoothstep((u-.58)/.42,0,1));
        // Critically damp phase changes so no one-frame jump reaches shoulder/arm/hand.
-       const pa=1-Math.exp(-Math.min(dt,1/60)*18);knightThrust.smoothPhase=THREE.MathUtils.lerp(knightThrust.smoothPhase,targetPhase,pa);const phase=knightThrust.smoothPhase;
+       const pa=1-Math.exp(-Math.min(dt,1/60)*22);knightThrust.smoothPhase=THREE.MathUtils.lerp(knightThrust.smoothPhase,targetPhase,pa);const phase=knightThrust.smoothPhase;
        const apply=(bone,rx,ry,rz)=>{if(!bone)return;const dq=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx*phase),THREE.MathUtils.degToRad(ry*phase),THREE.MathUtils.degToRad(rz*phase),"XYZ"));bone.quaternion.multiply(dq)};
        apply(knightThrust.shoulder,cfg.shoulderRX,cfg.shoulderRY,cfg.shoulderRZ);apply(knightThrust.arm,cfg.armRX,cfg.armRY,cfg.armRZ);apply(knightThrust.fore,cfg.foreRX,cfg.foreRY,cfg.foreRZ);apply(knightThrust.hand,cfg.handRX,cfg.handRY,cfg.handRZ);
        
