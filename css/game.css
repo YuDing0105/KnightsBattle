@@ -306,3 +306,10 @@ header{display:flex!important;justify-content:center!important;align-items:cente
 /* V122 Archer Arrow Debug — upper right below Bow */
 #arrowDebug{position:fixed;right:8px;top:260px;z-index:61000;width:250px;padding:10px;background:#111e;color:#fff;border:1px solid #66e8ff;border-radius:8px;font:11px/1.25 monospace}
 #arrowDebug>b{display:block;margin-bottom:7px;color:#66e8ff}#arrowDebug label{display:grid;grid-template-columns:48px 1fr 40px;align-items:center;gap:4px;margin:4px 0}#arrowDebug input{width:100%}#arrowDebug output{text-align:right}#arrowDebug button{margin:6px 5px 0 0;font-size:10px}#arrowDebug pre{white-space:pre-wrap;font-size:9px;margin:5px 0 0}
+
+/* V125 grid is hidden by default and shown only by the top-right checkbox */
+.arena:after,.grid-labels{display:none!important}
+body.show-grid .arena:after,body.show-grid .grid-labels{display:block!important}
+#gridToggleWrap{position:fixed;right:8px;top:8px;z-index:62000;padding:5px 8px;border-radius:6px;background:#000a;color:#fff;font:700 11px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;gap:6px}
+#gridToggle{margin:0;width:14px;height:14px}
+#headBoneDebug,#bowDebug,#arrowDebug,#archerBoneDebug{display:none!important}
