@@ -204,7 +204,7 @@ function setupArcher3D(){
  const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
  const archerLeftHand=archerBones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
  loader.load("./Bow_256.glb",bg=>{const bow=bg.scene;const bb=new THREE.Box3().setFromObject(bow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.48,desired=target/Math.max(axis,.001);
-   if(archerLeftHand){const hs=new THREE.Vector3();archerLeftHand.getWorldScale(hs);bow.scale.set(desired/Math.max(hs.x,.001),desired/Math.max(hs.y,.001),desired/Math.max(hs.z,.001));archerLeftHand.add(bow);bow.position.set(0,0,0);bow.rotation.set(0,0,0)}
+   if(archerLeftHand){const hs=new THREE.Vector3();archerLeftHand.getWorldScale(hs);bow.scale.set((desired*1.2)/Math.max(hs.x,.001),(desired*1.2)/Math.max(hs.y,.001),(desired*1.2)/Math.max(hs.z,.001));archerLeftHand.add(bow);bow.position.set(0,0,0);bow.rotation.set(THREE.MathUtils.degToRad(101),THREE.MathUtils.degToRad(61),THREE.MathUtils.degToRad(-1))}
    else{bow.scale.setScalar(desired);archer3D.add(bow);bow.position.set(-.25*size.x,.5*size.y,0)}
    bow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_BOW=bow;setupBowDebug(bow);
  },undefined,e=>console.error("KB bow load failed",e));
