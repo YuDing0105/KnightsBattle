@@ -185,6 +185,16 @@ function setupBowDebug(bow){
  p.querySelector("#bowReset").onclick=()=>{Object.assign(d,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});p.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};
  p.querySelector("#bowCopy").onclick=()=>{const txt="Archer Bow "+JSON.stringify(d);p.querySelector("#bowOut").textContent=txt;navigator.clipboard?.writeText(txt)};
 }
+function setupArrowDebug(arrow){
+ if(document.querySelector("#arrowDebug"))return;
+ const d={x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1};window.KB_ARROW_DEBUG=d;
+ const basePos=arrow.position.clone(),baseRot=arrow.rotation.clone(),baseScale=arrow.scale.clone();
+ const p=document.createElement("div");p.id="arrowDebug";p.innerHTML='<b>ARCHER ARROW DEBUG</b>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-2" max="2" step=".01" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<label>Scale <input data-k="scale" type="range" min=".2" max="3" step=".05" value="1"><output>1</output></label><div><button id="arrowReset">Reset</button><button id="arrowCopy">Copy Values</button></div><pre id="arrowOut"></pre>';document.body.appendChild(p);
+ const apply=()=>{arrow.position.set(basePos.x+d.x,basePos.y+d.y,basePos.z+d.z);arrow.rotation.set(baseRot.x+THREE.MathUtils.degToRad(d.rx),baseRot.y+THREE.MathUtils.degToRad(d.ry),baseRot.z+THREE.MathUtils.degToRad(d.rz));arrow.scale.copy(baseScale).multiplyScalar(d.scale)};
+ p.querySelectorAll("input").forEach(i=>i.oninput=()=>{d[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value;apply()});
+ p.querySelector("#arrowReset").onclick=()=>{Object.assign(d,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});p.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};
+ p.querySelector("#arrowCopy").onclick=()=>{const txt="Archer Arrow "+JSON.stringify(d);p.querySelector("#arrowOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+}
 function setupArcher3D(){
  const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true}),loader=new GLTFLoader();
@@ -203,6 +213,12 @@ function setupArcher3D(){
  const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
  const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
  const archerLeftHand=archerBones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
+ const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
+ loader.load("./Arrow_256.glb",ag=>{const arrow=ag.scene;const bb=new THREE.Box3().setFromObject(arrow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.42,desired=target/Math.max(axis,.001);
+   if(archerRightHand){const hs=new THREE.Vector3();archerRightHand.getWorldScale(hs);arrow.scale.set(desired/Math.max(hs.x,.001),desired/Math.max(hs.y,.001),desired/Math.max(hs.z,.001));archerRightHand.add(arrow);arrow.position.set(0,0,0);arrow.rotation.set(0,0,0)}
+   else{arrow.scale.setScalar(desired);archer3D.add(arrow);arrow.position.set(.25*size.x,.5*size.y,0)}
+   arrow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_ARROW=arrow;setupArrowDebug(arrow);
+ },undefined,e=>console.error("KB arrow load failed",e));
  loader.load("./Bow_256.glb",bg=>{const bow=bg.scene;const bb=new THREE.Box3().setFromObject(bow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.48,desired=target/Math.max(axis,.001);
    if(archerLeftHand){const hs=new THREE.Vector3();archerLeftHand.getWorldScale(hs);bow.scale.set((desired*1.2)/Math.max(hs.x,.001),(desired*1.2)/Math.max(hs.y,.001),(desired*1.2)/Math.max(hs.z,.001));archerLeftHand.add(bow);bow.position.set(0,0,0);bow.rotation.set(THREE.MathUtils.degToRad(101),THREE.MathUtils.degToRad(61),THREE.MathUtils.degToRad(-1))}
    else{bow.scale.setScalar(desired);archer3D.add(bow);bow.position.set(-.25*size.x,.5*size.y,0)}
