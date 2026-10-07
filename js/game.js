@@ -152,6 +152,15 @@ function setupWarrior3D(){
  },undefined,e=>console.error("KB warrior load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(warriorMixer)warriorMixer.update(Math.min(warriorClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
+function setupArcherHandDebug(dbg){
+ let p=document.querySelector("#archerBoneDebug");if(p)return;
+ p=document.createElement("div");p.id="archerBoneDebug";p.innerHTML='<b>ARCHER RIGHT HAND DEBUG</b><label>Animation <select id="archDbgAnim"><option value="idle">Archery Shot 2</option><option value="attack">Archery Shot 3</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="archDbgReset">Reset</button><button id="archDbgCopy">Copy Values</button></div><pre id="archDbgOut"></pre>';
+ document.body.appendChild(p);
+ p.querySelectorAll("input").forEach(i=>i.oninput=()=>{dbg[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
+ p.querySelector("#archDbgAnim").onchange=e=>{if(e.target.value==="attack")playArcherAttack();else if(archerMixer&&archerIdle){archerMixer.stopAllAction();archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play()}};
+ p.querySelector("#archDbgReset").onclick=()=>{Object.keys(dbg).forEach(k=>dbg[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
+ p.querySelector("#archDbgCopy").onclick=()=>{const txt="Archer RightHand "+JSON.stringify(dbg);p.querySelector("#archDbgOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+}
 function setupArcher3D(){
  const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true}),loader=new GLTFLoader();
@@ -164,35 +173,13 @@ function setupArcher3D(){
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
  archerMixer=new THREE.AnimationMixer(archer3D);const clips=g.animations||[];window.KB_ARCHER_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_ARCHER_ANIMATIONS);
  const norm=s=>(s||"").replace(/[ _-]/g,"").toLowerCase();archerIdle=clips.find(a=>norm(a.name)==="archeryshot2")||null;archerAttack=clips.find(a=>norm(a.name)==="archeryshot3")||null;
- // V104: preserve the authored hand distance. Only resolve penetration against the CARTOON HEAD MODEL volume.
+ // V105 manual Archer RightHand debug controller.
  const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
  const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
- const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
- if(archerRightHand&&archerHead){
-   const originalMixerUpdate=archerMixer.update.bind(archerMixer);
-   archerMixer.update=(dt)=>{
-     originalMixerUpdate(dt); // always reset to the original GLB animation pose first
-     const handWorld=new THREE.Vector3(),headWorld=new THREE.Vector3();
-     archerRightHand.getWorldPosition(handWorld);archerHead.getWorldPosition(headWorld);
-     // Large chibi head: use an ellipsoid around the actual head bone, not a generic left/right push.
-     const rx=size.y*.105, ry=size.y*.135, rz=size.y*.115;
-     const rel=handWorld.clone().sub(headWorld);
-     const q=archer3D.getWorldQuaternion(new THREE.Quaternion()).invert();
-     const local=rel.clone().applyQuaternion(q);
-     const metric=(local.x*local.x)/(rx*rx)+(local.y*local.y)/(ry*ry)+(local.z*local.z)/(rz*rz);
-     if(metric<1){
-       // Push radially to the nearest point OUTSIDE the head volume, preserving the animation's natural side/direction.
-       const k=1/Math.sqrt(Math.max(metric,.0001));
-       const targetLocal=local.multiplyScalar(k*1.08);
-       const targetWorld=targetLocal.applyQuaternion(archer3D.getWorldQuaternion(new THREE.Quaternion())).add(headWorld);
-       const pushWorld=targetWorld.sub(handWorld);
-       const parent=archerRightHand.parent,parentQuat=parent.getWorldQuaternion(new THREE.Quaternion()),parentScale=new THREE.Vector3();parent.getWorldScale(parentScale);
-       const pushLocal=pushWorld.applyQuaternion(parentQuat.clone().invert());
-       pushLocal.set(pushLocal.x/Math.max(parentScale.x,.001),pushLocal.y/Math.max(parentScale.y,.001),pushLocal.z/Math.max(parentScale.z,.001));
-       archerRightHand.position.add(pushLocal);archerRightHand.updateMatrixWorld(true);
-     }
-   };
- }
+ const dbg={x:0,y:0,z:0,rx:0,ry:0,rz:0},originalMixerUpdate=archerMixer.update.bind(archerMixer);
+ if(archerRightHand)archerMixer.update=(dt)=>{originalMixerUpdate(dt);archerRightHand.position.x+=dbg.x;archerRightHand.position.y+=dbg.y;archerRightHand.position.z+=dbg.z;archerRightHand.rotation.x+=THREE.MathUtils.degToRad(dbg.rx);archerRightHand.rotation.y+=THREE.MathUtils.degToRad(dbg.ry);archerRightHand.rotation.z+=THREE.MathUtils.degToRad(dbg.rz);archerRightHand.updateMatrixWorld(true)};
+ window.KB_ARCHER_HAND_DEBUG=dbg;
+ setupArcherHandDebug(dbg);
  if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
  },undefined,e=>console.error("KB archer load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(archerMixer)archerMixer.update(Math.min(archerClock.getDelta(),.05));ren.render(scene,cam)}loop();
