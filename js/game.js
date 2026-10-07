@@ -299,8 +299,22 @@ function setupHorse3D(){
    p.querySelectorAll("input").forEach(i=>i.oninput=()=>{bd[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
    p.querySelector("#kbReset").onclick=zero;
    p.querySelector("#kbCopy").onclick=()=>{const b=bones[bd.boneIndex],txt="Knight Bone "+JSON.stringify({index:bd.boneIndex,name:b?.name||"",rx:bd.rx,ry:bd.ry,rz:bd.rz});p.querySelector("#kbOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+   const hips=bones.find(b=>b.name==="mixamorigHips"),neck=bones.find(b=>/mixamorig:?Neck|^Neck$/i.test(b.name)),head=bones.find(b=>/mixamorig:?Head$|^Head$/i.test(b.name));
+   const hipsOffsetQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(26),0,0,"XYZ"));
+   const idleNeckQ=neck?neck.quaternion.clone():null,idleHeadQ=head?head.quaternion.clone():null;
    const baseUpdate=knightMixer.update.bind(knightMixer);
-   knightMixer.update=dt=>{baseUpdate(dt);const hips=bones.find(b=>b.name==="mixamorigHips");if(hips)hips.rotation.x+=THREE.MathUtils.degToRad(26);const b=bones[bd.boneIndex];if(b){b.rotation.x+=THREE.MathUtils.degToRad(bd.rx);b.rotation.y+=THREE.MathUtils.degToRad(bd.ry);b.rotation.z+=THREE.MathUtils.degToRad(bd.rz);b.updateMatrixWorld(true)}};
+   knightMixer.update=dt=>{
+     baseUpdate(dt);
+     // Stabilize Ride Idle upper look to remove authored twitch; do not constrain Ride Attack.
+     if(!knightAttacking){if(neck&&idleNeckQ)neck.quaternion.copy(idleNeckQ);if(head&&idleHeadQ)head.quaternion.copy(idleHeadQ)}
+     if(hips)hips.quaternion.multiply(hipsOffsetQ);
+     const b=bones[bd.boneIndex];
+     if(b){
+       // Quaternion delta prevents Euler-angle wrapping (the previous cause of Neck spinning).
+       const dq=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(bd.rx),THREE.MathUtils.degToRad(bd.ry),THREE.MathUtils.degToRad(bd.rz),"XYZ"));
+       b.quaternion.multiply(dq);b.updateMatrixWorld(true);
+     }
+   };
   },undefined,e=>console.error("KB knight load failed",e));
  },undefined,e=>console.error("KB horse load failed",e));
  (function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(knightMixer)knightMixer.update(dt);ren.render(scene,cam)})();
