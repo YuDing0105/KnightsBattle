@@ -293,13 +293,30 @@ function setupHorse3D(){
    const kRightArm=bones.find(b=>/(mixamorig:?RightArm$|right.*upperarm)/i.test(b.name))||null;
    const kRightFore=bones.find(b=>/(mixamorig:?RightForeArm$|right.*forearm)/i.test(b.name))||null;
    const kRightHand=bones.find(b=>/(mixamorig:?RightHand$|right.*hand)/i.test(b.name))||null;
-   const thrustCfg={name:"Mounted_Spear_Thrust_v1",duration:.72,armRX:-8,armRY:0,armRZ:-5,foreRX:-18,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0,reach:.12};
-   knightThrust={cfg:thrustCfg,active:false,t:0,arm:kRightArm,fore:kRightFore,hand:kRightHand};
-   window.KB_KNIGHT_THRUST=knightThrust;
-   const ap=document.createElement("div");ap.id="knightAttackDebug";ap.innerHTML='<b>Mounted_Spear_Thrust_v1</b>'+["duration","armRX","armRY","armRZ","foreRX","foreRY","foreRZ","handRX","handRY","handRZ","reach"].map(k=>'<label>'+k+' <input data-k="'+k+'" type="range" min="'+(k==="duration"?".3":k==="reach"?"-.5":"-90")+'" max="'+(k==="duration"?"1.5":k==="reach"?".5":"90")+'" step="'+(k==="duration"||k==="reach"?".01":"1")+'" value="'+thrustCfg[k]+'"><output>'+thrustCfg[k]+'</output></label>').join("")+'<div><button id="katPlay">Play Attack</button><button id="katCopy">Copy Values</button></div><pre id="katOut"></pre>';document.body.appendChild(ap);
-   ap.querySelectorAll("input").forEach(i=>i.oninput=()=>{thrustCfg[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
-   ap.querySelector("#katPlay").onclick=()=>playKnightAttack();ap.querySelector("#katCopy").onclick=()=>{const txt="Knight Attack "+JSON.stringify(thrustCfg);ap.querySelector("#katOut").textContent=txt;navigator.clipboard?.writeText(txt)};
-   const bd={boneIndex:0,rx:0,ry:0,rz:0};window.KB_KNIGHT_BONE_DEBUG=bd;
+   const kShoulder=bones.find(b=>/(mixamorig:?RightShoulder$|right.*shoulder)/i.test(b.name))||null;
+   const kRightArm=bones.find(b=>/(mixamorig:?RightArm$|right.*upperarm)/i.test(b.name))||null;
+   const kRightFore=bones.find(b=>/(mixamorig:?RightForeArm$|right.*forearm)/i.test(b.name))||null;
+   const kRightHand=bones.find(b=>/(mixamorig:?RightHand$|right.*hand)/i.test(b.name))||null;
+   const thrustCfg={name:"Mounted_Spear_Thrust_Keyed_v2",duration:.8,keys:[
+    {t:0,shoulder:[0,0,0],arm:[0,0,0],fore:[0,0,0],hand:[0,0,0]},
+    {t:.35,shoulder:[0,0,0],arm:[0,0,0],fore:[0,0,0],hand:[0,0,0]},
+    {t:1,shoulder:[0,0,0],arm:[0,0,0],fore:[0,0,0],hand:[0,0,0]}
+   ]};
+   knightThrust={cfg:thrustCfg,active:false,t:0,shoulder:kShoulder,arm:kRightArm,fore:kRightFore,hand:kRightHand};window.KB_KNIGHT_THRUST=knightThrust;
+   const ap=document.createElement("div");ap.id="knightAttackDebug";
+   let keyIndex=0,part="arm";
+   const parts={shoulder:kShoulder,arm:kRightArm,fore:kRightFore,hand:kRightHand};
+   ap.innerHTML='<b>KEYED SPEAR ATTACK</b><label>Key <select id="katKey"><option value="0">0 · Start</option><option value="1">1 · Thrust</option><option value="2">2 · End</option></select></label><label>Time <input id="katTime" type="range" min="0" max="1" step=".01" value="0"><output>0</output></label><label>Bone <select id="katPart"><option value="shoulder">RightShoulder</option><option value="arm" selected>RightArm</option><option value="fore">RightForeArm</option><option value="hand">RightHand</option></select></label>'+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-120" max="120" step="1" value="0"><output>0</output></label>').join("")+'<label>Duration <input id="katDuration" type="range" min=".3" max="1.5" step=".01" value=".8"><output>.8</output></label><div><button id="katAdd">Add Key</button><button id="katDelete">Delete Key</button><button id="katPlay">Play</button><button id="katCopy">Copy Animation</button></div><pre id="katOut"></pre>';document.body.appendChild(ap);
+   const refreshKeys=()=>{const s=ap.querySelector("#katKey");s.innerHTML=thrustCfg.keys.map((k,i)=>'<option value="'+i+'">'+i+' · '+k.t.toFixed(2)+'</option>').join("");keyIndex=Math.min(keyIndex,thrustCfg.keys.length-1);s.value=keyIndex;loadKey()};
+   const loadKey=()=>{const k=thrustCfg.keys[keyIndex],v=k[part];ap.querySelector("#katTime").value=k.t;ap.querySelector("#katTime").nextElementSibling.value=k.t;["rx","ry","rz"].forEach((n,i)=>{const el=ap.querySelector('[data-k="'+n+'"]');el.value=v[i];el.nextElementSibling.value=v[i]})};
+   ap.querySelector("#katKey").onchange=e=>{keyIndex=+e.target.value;loadKey()};ap.querySelector("#katPart").onchange=e=>{part=e.target.value;loadKey()};
+   ap.querySelector("#katTime").oninput=e=>{thrustCfg.keys[keyIndex].t=+e.target.value;e.target.nextElementSibling.value=e.target.value;thrustCfg.keys.sort((a,b)=>a.t-b.t);keyIndex=thrustCfg.keys.indexOf(thrustCfg.keys.find(k=>k===thrustCfg.keys[keyIndex]))};
+   ap.querySelectorAll("[data-k]").forEach(el=>el.oninput=()=>{const map={rx:0,ry:1,rz:2};thrustCfg.keys[keyIndex][part][map[el.dataset.k]]=+el.value;el.nextElementSibling.value=el.value});
+   ap.querySelector("#katDuration").oninput=e=>{thrustCfg.duration=+e.target.value;e.target.nextElementSibling.value=e.target.value};
+   ap.querySelector("#katAdd").onclick=()=>{const src=JSON.parse(JSON.stringify(thrustCfg.keys[keyIndex]));src.t=Math.min(.99,src.t+.1);thrustCfg.keys.push(src);thrustCfg.keys.sort((a,b)=>a.t-b.t);keyIndex=thrustCfg.keys.indexOf(src);refreshKeys()};
+   ap.querySelector("#katDelete").onclick=()=>{if(thrustCfg.keys.length<=2)return;thrustCfg.keys.splice(keyIndex,1);keyIndex=Math.max(0,keyIndex-1);refreshKeys()};
+   ap.querySelector("#katPlay").onclick=()=>playKnightAttack();ap.querySelector("#katCopy").onclick=()=>{const txt="Knight Keyed Attack "+JSON.stringify(thrustCfg);ap.querySelector("#katOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+const bd={boneIndex:0,rx:0,ry:0,rz:0};window.KB_KNIGHT_BONE_DEBUG=bd;
    const p=document.createElement("div");p.id="knightBoneDebug";
    const opts=bones.map((b,i)=>'<option value="'+i+'">'+i+' · '+(b.name||"(unnamed)")+'</option>').join("");
    p.innerHTML='<b>KNIGHT BONE DEBUG</b><label>Bone <select id="kbBone">'+opts+'</select></label>'+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="kbReset">Reset</button><button id="kbCopy">Copy Values</button></div><pre id="kbOut"></pre>';document.body.appendChild(p);
@@ -355,12 +372,11 @@ function setupHorse3D(){
        b.quaternion.multiply(dq);b.updateMatrixWorld(true);
      }
      if(knightThrust&&knightThrust.active){
-       knightThrust.t+=dt;const cfg=knightThrust.cfg,u=Math.min(1,knightThrust.t/cfg.duration);
-       // 0->1 thrust, brief hold, 1->0 recovery. Smooth and body-stable.
-       const w=u<.42?THREE.MathUtils.smoothstep(u/.42,0,1):u<.58?1:1-THREE.MathUtils.smoothstep((u-.58)/.42,0,1);
-       const apply=(bone,rx,ry,rz)=>{if(!bone)return;bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx*w),THREE.MathUtils.degToRad(ry*w),THREE.MathUtils.degToRad(rz*w),"XYZ")))};
-       apply(knightThrust.arm,cfg.armRX,cfg.armRY,cfg.armRZ);apply(knightThrust.fore,cfg.foreRX,cfg.foreRY,cfg.foreRZ);apply(knightThrust.hand,cfg.handRX,cfg.handRY,cfg.handRZ);
-       if(knightThrust.hand)knightThrust.hand.position.z+=cfg.reach*w;
+       knightThrust.t+=dt;const cfg=knightThrust.cfg,u=Math.min(1,knightThrust.t/cfg.duration),keys=cfg.keys;
+       let a=keys[0],z=keys[keys.length-1];for(let i=0;i<keys.length-1;i++)if(u>=keys[i].t&&u<=keys[i+1].t){a=keys[i];z=keys[i+1];break}
+       const span=Math.max(.0001,z.t-a.t),f=THREE.MathUtils.smoothstep((u-a.t)/span,0,1);
+       const apply=(bone,name)=>{if(!bone)return;const av=a[name],zv=z[name],rx=THREE.MathUtils.lerp(av[0],zv[0],f),ry=THREE.MathUtils.lerp(av[1],zv[1],f),rz=THREE.MathUtils.lerp(av[2],zv[2],f);bone.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(rx),THREE.MathUtils.degToRad(ry),THREE.MathUtils.degToRad(rz),"XYZ")))};
+       apply(knightThrust.shoulder,"shoulder");apply(knightThrust.arm,"arm");apply(knightThrust.fore,"fore");apply(knightThrust.hand,"hand");
        if(u>=1)knightThrust.active=false;
      }
    };
