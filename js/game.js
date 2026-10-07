@@ -1,5 +1,5 @@
 import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
-(()=>{"use strict";const names=["剑盾","弓箭","骑兵","斧兵"],pre=["swordsman","archer","cavalry","axe"],N=6,$=s=>document.querySelector(s),B=$("#board");let sword3D=null,swordMixer=null,swordIdle=null,swordAttack=null,swordClock=new THREE.Clock(),swordReady=false,swordAttacking=false,swordAttackQueued=false,weapon3D=null,shield3D=null,warrior3D=null,warriorMixer=null,warriorIdle=null,warriorAttack=null,warriorReady=false,warriorAttacking=false,warriorAttackQueued=false,warriorClock=new THREE.Clock(),axe3D=null;let G=[],total=0,best=0,Q=-1,busy=0,U=[],down=-1;const rnd=()=>Math.floor(Math.random()*4),id=(r,c)=>r*N+c,row=i=>Math.floor(i/N),col=i=>i%N,near=(a,b)=>Math.abs(row(a)-row(b))+Math.abs(col(a)-col(b))===1,wait=n=>new Promise(r=>setTimeout(r,n)),need=l=>5,ICON_ASSET_VERSION="87",icon=(t,l)=>pre[t]+"_lv"+l+".png?v="+ICON_ASSET_VERSION;
+(()=>{"use strict";const names=["剑盾","弓箭","骑兵","斧兵"],pre=["swordsman","archer","cavalry","axe"],N=6,$=s=>document.querySelector(s),B=$("#board");let sword3D=null,swordMixer=null,swordIdle=null,swordAttack=null,swordClock=new THREE.Clock(),swordReady=false,swordAttacking=false,swordAttackQueued=false,weapon3D=null,shield3D=null,warrior3D=null,warriorMixer=null,warriorIdle=null,warriorAttack=null,warriorReady=false,warriorAttacking=false,warriorAttackQueued=false,warriorClock=new THREE.Clock(),axe3D=null,archer3D=null,archerMixer=null,archerIdle=null,archerAttack=null,archerReady=false,archerAttacking=false,archerAttackQueued=false,archerClock=new THREE.Clock();let G=[],total=0,best=0,Q=-1,busy=0,U=[],down=-1;const rnd=()=>Math.floor(Math.random()*4),id=(r,c)=>r*N+c,row=i=>Math.floor(i/N),col=i=>i%N,near=(a,b)=>Math.abs(row(a)-row(b))+Math.abs(col(a)-col(b))===1,wait=n=>new Promise(r=>setTimeout(r,n)),need=l=>5,ICON_ASSET_VERSION="87",icon=(t,l)=>pre[t]+"_lv"+l+".png?v="+ICON_ASSET_VERSION;
 const iconCache=new Map();
 function preloadIcons(){
  for(let t=0;t<pre.length;t++)for(let l=1;l<=4;l++){
@@ -11,7 +11,30 @@ function setIconInstant(im,src){
  if(cached&&cached.complete&&cached.naturalWidth){im.src=cached.src;return}
  const next=cached||new Image();next.src=src;iconCache.set(src,next);
  if(next.decode)next.decode().catch(()=>{}).finally(()=>{im.src=src});else im.src=src;
-}function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupSwordsman3D(){
+}function make(){G=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){let t=rnd();while((c>1&&G[id(r,c-1)]===t&&G[id(r,c-2)]===t)||(r>1&&G[id(r-1,c)]===t&&G[id(r-2,c)]===t))t=rnd();G.push(t)}}function setupHeadDebug(){
+ if(document.querySelector("#headBoneDebug"))return;
+ const state={actor:"swordsman",x:0,y:0,z:0,rx:0,ry:0,rz:0};window.KB_HEAD_DEBUG=state;
+ const p=document.createElement("div");p.id="headBoneDebug";p.innerHTML='<b>HEAD / NECK DEBUG</b><label>Actor <select id="hdActor"><option value="swordsman" selected>Swordsman</option><option value="warrior">Warrior</option></select></label><label>Bone <select id="hdBone"><option value="head">Head</option><option value="neck">Neck</option></select></label>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-1" max="1" step=".005" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<div><button id="hdReset">Reset</button><button id="hdCopy">Copy Values</button></div><pre id="hdOut"></pre>';document.body.appendChild(p);
+ const zero=()=>{["x","y","z","rx","ry","rz"].forEach(k=>state[k]=0);p.querySelectorAll("input").forEach(i=>{i.value=0;i.nextElementSibling.value="0"})};
+ p.querySelector("#hdActor").onchange=e=>{state.actor=e.target.value;zero()};p.querySelector("#hdBone").onchange=()=>zero();
+ p.querySelectorAll("input").forEach(i=>i.oninput=()=>{state[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value});
+ p.querySelector("#hdReset").onclick=zero;p.querySelector("#hdCopy").onclick=()=>{const txt=(state.actor==="swordsman"?"Swordsman":"Warrior")+" "+p.querySelector("#hdBone").value+" "+JSON.stringify(state);p.querySelector("#hdOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+ window.KB_APPLY_HEAD_DEBUG=(root,mixer,actor)=>{const bones=[];root.traverse(o=>{if(o.isBone)bones.push(o)});const head=bones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name)),neck=bones.find(o=>/(mixamorigNeck|^neck$|neck)/i.test(o.name)),base=mixer.update.bind(mixer);mixer.update=(dt)=>{base(dt);if(actor==="warrior"&&head){head.rotation.x+=THREE.MathUtils.degToRad(-21);head.rotation.y+=THREE.MathUtils.degToRad(1)}if(actor==="swordsman"&&head){
+ // Suppress the large nodding authored into Combat Stance while idle.
+ // Capture a stable head basis once, then hold the calibrated look direction.
+ const isAttacking=typeof swordAttacking!=="undefined"&&swordAttacking;
+ if(!isAttacking){
+   if(!head.userData.kbIdleBaseQ)head.userData.kbIdleBaseQ=head.quaternion.clone();
+   const fixedOffset=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(-21),THREE.MathUtils.degToRad(24),0,"XYZ"));
+   const targetQ=head.userData.kbIdleBaseQ.clone().multiply(fixedOffset);
+   const prev=head.userData.kbStableHeadQ||targetQ.clone();
+   prev.slerp(targetQ,1-Math.exp(-dt*22));head.userData.kbStableHeadQ=prev;head.quaternion.copy(prev);
+ }else{
+   head.userData.kbIdleBaseQ=null;head.userData.kbStableHeadQ=null;
+ }
+}if(state.actor!==actor)return;const bone=document.querySelector("#hdBone")?.value==="neck"?(neck||head):(head||neck);if(!bone)return;bone.position.x+=state.x;bone.position.y+=state.y;bone.position.z+=state.z;bone.rotation.x+=THREE.MathUtils.degToRad(state.rx);bone.rotation.y+=THREE.MathUtils.degToRad(state.ry);bone.rotation.z+=THREE.MathUtils.degToRad(state.rz);bone.updateMatrixWorld(true)}};
+}
+function setupSwordsman3D(){
  const host=document.querySelector("#swordsman3d");if(!host||host.dataset.three)return;
  host.dataset.three="1";host.innerHTML="";host.classList.add("swordsman3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true});const makeLoader=()=>new GLTFLoader();
@@ -21,11 +44,14 @@ function setIconInstant(im,src){
  makeLoader().load("./swordsman_512.glb",g=>{
   sword3D=g.scene;scene.add(sword3D);
   const raw=new THREE.Box3().setFromObject(sword3D),rawSize=raw.getSize(new THREE.Vector3()),rawCenter=raw.getCenter(new THREE.Vector3());
-  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar(4.158/Math.max(rawSize.y,.001));
+  sword3D.position.set(-rawCenter.x,-raw.min.y,-rawCenter.z);sword3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;sword3D.scale.setScalar((4.158*1.11288375)/Math.max(rawSize.y,.001));
   const fit=new THREE.Box3().setFromObject(sword3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());
   sword3D.position.x-=center.x;sword3D.position.y-=fit.min.y;
-  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
-  swordMixer=new THREE.AnimationMixer(sword3D);const clips=g.animations||[],idleClips=clips.filter(a=>/idle/i.test(a.name));
+  // IMPORTANT: camera framing must stay tied to the original baseline size.
+  // Previously it used the post-scale size, so every model enlargement moved the camera back by the same ratio and visually cancelled the scale change.
+  const baselineHeight=size.y/1.11288375;
+  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(baselineHeight*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,baselineHeight*.5,dist);cam.lookAt(0,baselineHeight*.5,0);
+  swordMixer=new THREE.AnimationMixer(sword3D);setupHeadDebug();window.KB_APPLY_HEAD_DEBUG(sword3D,swordMixer,"swordsman");const clips=g.animations||[],idleClips=clips.filter(a=>/idle/i.test(a.name));
   swordIdle=clips.find(a=>/combat[ _-]*stance/i.test(a.name))||idleClips[0]||null;swordAttack=clips.find(a=>/attack|slash|sword|strike|melee|swing/i.test(a.name))||null;
   if(swordIdle)swordMixer.clipAction(swordIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();swordReady=true;
   const bones=[];sword3D.traverse(o=>{if(o.isBone)bones.push(o)});
@@ -73,7 +99,7 @@ function setupWarrior3D(){
  warrior3D.position.set(-rc.x,-raw.min.y,-rc.z);warrior3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9;warrior3D.scale.setScalar(4.158/Math.max(rs.y,.001));
  const fit=new THREE.Box3().setFromObject(warrior3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());warrior3D.position.x-=center.x;warrior3D.position.y-=fit.min.y;
  const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
- warriorMixer=new THREE.AnimationMixer(warrior3D);const clips=g.animations||[];window.KB_WARRIOR_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_WARRIOR_ANIMATIONS);warriorIdle=clips.find(a=>a.name==="Idle_5")||clips.find(a=>a.name.replace(/[ _-]/g,"").toLowerCase()==="idle5")||null;console.info("KB Warrior animations:",clips.map(a=>a.name),"selected idle:",warriorIdle?.name);warriorAttack=clips.find(a=>a.name==="Axe_Spin_Attack")||clips.find(a=>/attack/i.test(a.name))||null;
+ warriorMixer=new THREE.AnimationMixer(warrior3D);setupHeadDebug();window.KB_APPLY_HEAD_DEBUG(warrior3D,warriorMixer,"warrior");const clips=g.animations||[];window.KB_WARRIOR_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_WARRIOR_ANIMATIONS);warriorIdle=clips.find(a=>a.name==="Idle_5")||clips.find(a=>a.name.replace(/[ _-]/g,"").toLowerCase()==="idle5")||null;console.info("KB Warrior animations:",clips.map(a=>a.name),"selected idle:",warriorIdle?.name);warriorAttack=clips.find(a=>a.name==="Axe_Spin_Attack")||clips.find(a=>/attack/i.test(a.name))||null;
  if(warriorIdle)warriorMixer.clipAction(warriorIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();warriorReady=true;
  const bones=[];warrior3D.traverse(o=>{if(o.isBone)bones.push(o)});const rightHand=bones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
  loader.load("./Axe_512.glb",ag=>{
@@ -149,6 +175,38 @@ function setupWarrior3D(){
  },undefined,e=>console.error("KB warrior load failed",e));
  function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(warriorMixer)warriorMixer.update(Math.min(warriorClock.getDelta(),.05));ren.render(scene,cam)}loop();
 }
+function setupArcher3D(){
+ const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
+ const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true}),loader=new GLTFLoader();
+ ren.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));ren.outputColorSpace=THREE.SRGBColorSpace;ren.setClearColor(0x000000,0);ren.domElement.style.cssText="display:block;width:100%;height:100%;position:absolute;inset:0;z-index:5";host.style.position="relative";host.appendChild(ren.domElement);
+ const resize=()=>{const w=Math.max(host.clientWidth,209),h=Math.max(host.clientHeight,180);cam.aspect=w/h;cam.updateProjectionMatrix();ren.setSize(w,h,false)};resize();window.addEventListener("resize",resize);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x5a4630,2.5));const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(-3,5,4);scene.add(dl);
+ loader.load("./Archer_512.glb",g=>{archer3D=g.scene;scene.add(archer3D);const raw=new THREE.Box3().setFromObject(archer3D),rs=raw.getSize(new THREE.Vector3()),rc=raw.getCenter(new THREE.Vector3());
+ archer3D.position.set(-rc.x,-raw.min.y,-rc.z);archer3D.rotation.y=Math.PI/4+Math.PI/6+Math.PI/9-Math.PI/4;archer3D.scale.setScalar(4.158/Math.max(rs.y,.001));
+ const fit=new THREE.Box3().setFromObject(archer3D),size=fit.getSize(new THREE.Vector3()),center=fit.getCenter(new THREE.Vector3());archer3D.position.x-=center.x;archer3D.position.y-=fit.min.y;
+ const vfov=THREE.MathUtils.degToRad(cam.fov),dist=(size.y*.72)/Math.tan(vfov/2);cam.position.set(dist*.72,size.y*.5,dist);cam.lookAt(0,size.y*.5,0);
+ archerMixer=new THREE.AnimationMixer(archer3D);const clips=g.animations||[];window.KB_ARCHER_ANIMATIONS=clips.map((a,i)=>({index:i+1,name:a.name,duration:a.duration}));console.table(window.KB_ARCHER_ANIMATIONS);
+ const norm=s=>(s||"").replace(/[ _-]/g,"").toLowerCase();archerIdle=clips.find(a=>norm(a.name)==="archeryshot2")||null;archerAttack=clips.find(a=>norm(a.name)==="archeryshot3")||null;
+ // V105 manual Archer RightHand debug controller.
+ const archerBones=[];archer3D.traverse(o=>{if(o.isBone)archerBones.push(o)});
+ const archerRightShoulder=archerBones.find(o=>/(mixamorigRightShoulder|right.*shoulder|shoulder.*r)/i.test(o.name))||null;
+ const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
+ const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
+ const archerBaseUpdate=archerMixer.update.bind(archerMixer);
+ archerMixer.update=(dt)=>{archerBaseUpdate(dt);if(archerRightShoulder)archerRightShoulder.rotation.x+=THREE.MathUtils.degToRad(39);if(archerRightElbow)archerRightElbow.rotation.x+=THREE.MathUtils.degToRad(-9);if(archerHead){archerHead.rotation.x+=THREE.MathUtils.degToRad(-21);archerHead.rotation.y+=THREE.MathUtils.degToRad(30)}};
+ if(archerIdle)archerMixer.clipAction(archerIdle).reset().setLoop(THREE.LoopRepeat,Infinity).play();archerReady=true;
+ },undefined,e=>console.error("KB archer load failed",e));
+ function loop(){requestAnimationFrame(loop);if(document.hidden)return;if(archerMixer)archerMixer.update(Math.min(archerClock.getDelta(),.05));ren.render(scene,cam)}loop();
+}
+function playArcherAttack(){
+ if(!archerReady||!archerMixer||!archerAttack)return;if(archerAttacking){archerAttackQueued=true;return}archerAttacking=true;
+ const p=archer3D.position.clone(),q=archer3D.quaternion.clone(),idle=archerIdle?archerMixer.clipAction(archerIdle):null,atk=archerMixer.clipAction(archerAttack);
+ atk.reset().setLoop(THREE.LoopOnce,1);atk.clampWhenFinished=true;if(idle)idle.crossFadeTo(atk,.10,false);atk.play();
+ const done=e=>{if(e.action!==atk)return;archerMixer.removeEventListener("finished",done);archer3D.position.copy(p);archer3D.quaternion.copy(q);archerAttacking=false;
+  if(archerAttackQueued){archerAttackQueued=false;atk.stop();playArcherAttack();return}
+  if(idle){atk.crossFadeTo(idle,.10,false);idle.reset().setLoop(THREE.LoopRepeat,Infinity).play()}else atk.stop();
+ };archerMixer.addEventListener("finished",done);
+}
 function playWarriorAttack(){if(!warriorReady||!warriorMixer||!warriorAttack)return;if(warriorAttacking){warriorAttackQueued=true;return}warriorAttacking=true;const p=warrior3D.position.clone(),q=warrior3D.quaternion.clone(),idle=warriorIdle?warriorMixer.clipAction(warriorIdle):null,atk=warriorMixer.clipAction(warriorAttack);atk.reset().setLoop(THREE.LoopOnce,1);atk.clampWhenFinished=true;if(idle)idle.crossFadeTo(atk,.12,false);atk.play();const done=e=>{if(e.action!==atk)return;warriorMixer.removeEventListener("finished",done);warrior3D.position.copy(p);warrior3D.quaternion.copy(q);warriorAttacking=false;if(warriorAttackQueued){warriorAttackQueued=false;atk.stop();playWarriorAttack();return}if(idle){atk.crossFadeTo(idle,.12,false);idle.reset().play()}else atk.stop()};warriorMixer.addEventListener("finished",done)}
 function playSwordAttack(){
  if(!swordReady||!swordMixer||!swordAttack)return;
@@ -168,7 +226,7 @@ function playSwordAttack(){
  };
  swordMixer.addEventListener("finished",done);
 }
-function draw(){B.innerHTML="";G.forEach((t,i)=>{let b=document.createElement("button");b.type="button";b.className="tile"+(i===Q?" selected":"");b.dataset.i=i;let im=document.createElement("img");setIconInstant(im,icon(t,U[t].l));im.alt=names[t];b.appendChild(im);B.appendChild(b)});$("#totalDamage").textContent=total;$("#bestDamage").textContent=best;if(!$("#units").children.length){$("#units").innerHTML=U.map((u,i)=>'<div class="unit"><div class="icon"'+(i===0?' id="swordsman3d"':i===3?' id="warrior3d"':'')+'>'+((i===0||i===3)?'':'<img data-unit="'+i+'" src="'+icon(i,u.l)+'">')+'</div></div>').join("");setupSwordsman3D();setupWarrior3D()}else{U.forEach((u,i)=>{if(i===0||i===3)return;let im=document.querySelector('#units img[data-unit="'+i+'"]');if(im)setIconInstant(im,icon(i,u.l))})}}function find(){let z=new Set(),a=[];for(let r=0;r<N;r++){let s=0;for(let c=1;c<=N;c++){if(c<N&&G[id(r,c)]===G[id(r,s)])continue;if(c-s>=3){let q=[];for(let k=s;k<c;k++){z.add(id(r,k));q.push(id(r,k))}a.push(q)}s=c}}for(let c=0;c<N;c++){let s=0;for(let r=1;r<=N;r++){if(r<N&&G[id(r,c)]===G[id(s,c)])continue;if(r-s>=3){let q=[];for(let k=s;k<r;k++){z.add(id(k,c));q.push(id(k,c))}a.push(q)}s=r}}return{ids:[...z],groups:a}}function pop(e,c){e.classList.remove(c);void e.offsetWidth;e.classList.add(c)}function reward(m,ch){let p=0,C=[0,0,0,0];m.groups.forEach(g=>p+=g.length>=5?10:g.length===4?3:1);p*=ch;m.ids.forEach(i=>C[G[i]]++);C.forEach((n,t)=>{if(!n)return;if(t===0)playSwordAttack();if(t===3)playWarriorAttack();U[t].x+=n;while(U[t].l<4&&U[t].x>=need(U[t].l)){U[t].x-=need(U[t].l);U[t].l++}});let d=0;C.forEach((n,t)=>d+=n*(4+U[t].l*3));d=Math.round(d*ch);total+=d;best=Math.max(best,d);$("#scorePop").textContent="+"+p+(ch>1?" COMBO ×"+ch:"");pop($("#scorePop"),"go");$("#damage").textContent="-"+d;pop($("#damage"),"go");draw()}function fall(ids){let x=new Set(ids);for(let c=0;c<N;c++){let k=[];for(let r=N-1;r>=0;r--)if(!x.has(id(r,c)))k.push(G[id(r,c)]);for(let r=N-1,n=0;r>=0;r--,n++)G[id(r,c)]=n<k.length?k[n]:rnd()}}async function resolve(){let ch=1;while(1){let m=find();if(!m.ids.length)break;reward(m,ch);m.ids.forEach(i=>B.children[i]&&B.children[i].classList.add("kill"));await wait(420);fall(m.ids);draw();await wait(130);ch++}}function end(){}async function swap(a,b){if(busy||!near(a,b))return;busy=1;B.children[a]?.classList.add("swap");B.children[b]?.classList.add("swap");await wait(250);[G[a],G[b]]=[G[b],G[a]];draw();await wait(80);if(!find().ids.length){[G[a],G[b]]=[G[b],G[a]];draw();$("#hint").textContent="该交换没有形成三消。";busy=0;return}await resolve();draw();busy=0}function choose(i){if(busy)return;if(Q<0){Q=i;draw()}else if(Q===i){Q=-1;draw()}else if(near(Q,i)){let a=Q;Q=-1;swap(a,i)}else{Q=i;draw()}}function reset(){total=0;best=0;Q=-1;busy=0;U=Array.from({length:4},()=>({l:1,x:0}));$("#hint").textContent="拖动图标，或点击两个相邻图标交换。";make();draw()}preloadIcons();B.addEventListener("click",e=>{let t=e.target.closest(".tile");if(t)choose(+t.dataset.i)});let startX=0,startY=0;
+function draw(){B.innerHTML="";G.forEach((t,i)=>{let b=document.createElement("button");b.type="button";b.className="tile"+(i===Q?" selected":"");b.dataset.i=i;let im=document.createElement("img");setIconInstant(im,icon(t,U[t].l));im.alt=names[t];b.appendChild(im);B.appendChild(b)});$("#totalDamage").textContent=total;$("#bestDamage").textContent=best;if(!$("#units").children.length){$("#units").innerHTML=U.map((u,i)=>'<div class="unit"><div class="icon"'+(i===0?' id="swordsman3d"':i===1?' id="archer3d"':i===3?' id="warrior3d"':'')+'>'+((i===0||i===1||i===3)?'':'<img data-unit="'+i+'" src="'+icon(i,u.l)+'">')+'</div></div>').join("");setupSwordsman3D();setupArcher3D();setupWarrior3D()}else{U.forEach((u,i)=>{if(i===0||i===1||i===3)return;let im=document.querySelector('#units img[data-unit="'+i+'"]');if(im)setIconInstant(im,icon(i,u.l))})}}function find(){let z=new Set(),a=[];for(let r=0;r<N;r++){let s=0;for(let c=1;c<=N;c++){if(c<N&&G[id(r,c)]===G[id(r,s)])continue;if(c-s>=3){let q=[];for(let k=s;k<c;k++){z.add(id(r,k));q.push(id(r,k))}a.push(q)}s=c}}for(let c=0;c<N;c++){let s=0;for(let r=1;r<=N;r++){if(r<N&&G[id(r,c)]===G[id(s,c)])continue;if(r-s>=3){let q=[];for(let k=s;k<r;k++){z.add(id(k,c));q.push(id(k,c))}a.push(q)}s=r}}return{ids:[...z],groups:a}}function pop(e,c){e.classList.remove(c);void e.offsetWidth;e.classList.add(c)}function reward(m,ch){let p=0,C=[0,0,0,0];m.groups.forEach(g=>p+=g.length>=5?10:g.length===4?3:1);p*=ch;m.ids.forEach(i=>C[G[i]]++);C.forEach((n,t)=>{if(!n)return;if(t===0)playSwordAttack();if(t===1)playArcherAttack();if(t===3)playWarriorAttack();U[t].x+=n;while(U[t].l<4&&U[t].x>=need(U[t].l)){U[t].x-=need(U[t].l);U[t].l++}});let d=0;C.forEach((n,t)=>d+=n*(4+U[t].l*3));d=Math.round(d*ch);total+=d;best=Math.max(best,d);$("#scorePop").textContent="+"+p+(ch>1?" COMBO ×"+ch:"");pop($("#scorePop"),"go");$("#damage").textContent="-"+d;pop($("#damage"),"go");draw()}function fall(ids){let x=new Set(ids);for(let c=0;c<N;c++){let k=[];for(let r=N-1;r>=0;r--)if(!x.has(id(r,c)))k.push(G[id(r,c)]);for(let r=N-1,n=0;r>=0;r--,n++)G[id(r,c)]=n<k.length?k[n]:rnd()}}async function resolve(){let ch=1;while(1){let m=find();if(!m.ids.length)break;reward(m,ch);m.ids.forEach(i=>B.children[i]&&B.children[i].classList.add("kill"));await wait(420);fall(m.ids);draw();await wait(130);ch++}}function end(){}async function swap(a,b){if(busy||!near(a,b))return;busy=1;B.children[a]?.classList.add("swap");B.children[b]?.classList.add("swap");await wait(250);[G[a],G[b]]=[G[b],G[a]];draw();await wait(80);if(!find().ids.length){[G[a],G[b]]=[G[b],G[a]];draw();$("#hint").textContent="该交换没有形成三消。";busy=0;return}await resolve();draw();busy=0}function choose(i){if(busy)return;if(Q<0){Q=i;draw()}else if(Q===i){Q=-1;draw()}else if(near(Q,i)){let a=Q;Q=-1;swap(a,i)}else{Q=i;draw()}}function reset(){total=0;best=0;Q=-1;busy=0;U=Array.from({length:4},()=>({l:1,x:0}));$("#hint").textContent="拖动图标，或点击两个相邻图标交换。";make();draw()}preloadIcons();B.addEventListener("click",e=>{let t=e.target.closest(".tile");if(t)choose(+t.dataset.i)});let startX=0,startY=0;
 B.addEventListener("pointerdown",e=>{
  let t=e.target.closest(".tile"); if(!t)return;
  down=+t.dataset.i; startX=e.clientX; startY=e.clientY;
