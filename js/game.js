@@ -185,6 +185,16 @@ function setupBowDebug(bow){
  p.querySelector("#bowReset").onclick=()=>{Object.assign(d,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});p.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};
  p.querySelector("#bowCopy").onclick=()=>{const txt="Archer Bow "+JSON.stringify(d);p.querySelector("#bowOut").textContent=txt;navigator.clipboard?.writeText(txt)};
 }
+function setupArrowDebug(arrow){
+ if(document.querySelector("#arrowDebug"))return;
+ const d={x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1};window.KB_ARROW_DEBUG=d;
+ const basePos=arrow.position.clone(),baseRot=arrow.rotation.clone(),baseScale=arrow.scale.clone();
+ const p=document.createElement("div");p.id="arrowDebug";p.innerHTML='<b>ARCHER ARROW DEBUG</b>'+["x","y","z"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-2" max="2" step=".01" value="0"><output>0</output></label>').join("")+["rx","ry","rz"].map(k=>'<label>'+k.toUpperCase()+' <input data-k="'+k+'" type="range" min="-180" max="180" step="1" value="0"><output>0</output></label>').join("")+'<label>Scale <input data-k="scale" type="range" min=".2" max="3" step=".05" value="1"><output>1</output></label><div><button id="arrowReset">Reset</button><button id="arrowCopy">Copy Values</button></div><pre id="arrowOut"></pre>';document.body.appendChild(p);
+ const apply=()=>{arrow.position.set(basePos.x+d.x,basePos.y+d.y,basePos.z+d.z);arrow.rotation.set(baseRot.x+THREE.MathUtils.degToRad(d.rx),baseRot.y+THREE.MathUtils.degToRad(d.ry),baseRot.z+THREE.MathUtils.degToRad(d.rz));arrow.scale.copy(baseScale).multiplyScalar(d.scale)};
+ p.querySelectorAll("input").forEach(i=>i.oninput=()=>{d[i.dataset.k]=+i.value;i.nextElementSibling.value=i.value;apply()});
+ p.querySelector("#arrowReset").onclick=()=>{Object.assign(d,{x:0,y:0,z:0,rx:0,ry:0,rz:0,scale:1});p.querySelectorAll("input").forEach(i=>{i.value=i.dataset.k==="scale"?1:0;i.nextElementSibling.value=i.value});apply()};
+ p.querySelector("#arrowCopy").onclick=()=>{const txt="Archer Arrow "+JSON.stringify(d);p.querySelector("#arrowOut").textContent=txt;navigator.clipboard?.writeText(txt)};
+}
 function setupArcher3D(){
  const host=document.querySelector("#archer3d");if(!host||host.dataset.three)return;host.dataset.three="1";host.innerHTML="";host.classList.add("archer3d");
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(32,209/180,.1,100),ren=new THREE.WebGLRenderer({alpha:true,antialias:true}),loader=new GLTFLoader();
@@ -203,6 +213,12 @@ function setupArcher3D(){
  const archerRightElbow=archerBones.find(o=>/(mixamorigRightForeArm|right.*forearm|right.*lowerarm|forearm.*r|lowerarm.*r)/i.test(o.name))||null;
  const archerHead=archerBones.find(o=>/(mixamorigHead|^head$|head)/i.test(o.name))||null;
  const archerLeftHand=archerBones.find(o=>/(mixamorigLeftHand|left.*hand|hand.*l|l[_ .-]?hand)/i.test(o.name))||null;
+ const archerRightHand=archerBones.find(o=>/(mixamorigRightHand|right.*hand|hand.*r|r[_ .-]?hand)/i.test(o.name))||null;
+ loader.load("./Arrow_256.glb",ag=>{const arrow=ag.scene;const bb=new THREE.Box3().setFromObject(arrow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.42,desired=target/Math.max(axis,.001);
+   if(archerRightHand){const hs=new THREE.Vector3();archerRightHand.getWorldScale(hs);arrow.scale.set((desired*1.25)/Math.max(hs.x,.001),(desired*1.25)/Math.max(hs.y,.001),(desired*1.25)/Math.max(hs.z,.001));archerRightHand.add(arrow);arrow.position.set(-0.1,0.37,0.12);arrow.rotation.set(THREE.MathUtils.degToRad(101),0,0)}
+   else{arrow.scale.setScalar(desired);archer3D.add(arrow);arrow.position.set(.25*size.x,.5*size.y,0)}
+   arrow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_ARROW=arrow;window.KB_ARCHER_ARROW_HAND=archerRightHand;window.KB_ARCHER_ARROW_BASE={position:arrow.position.clone(),quaternion:arrow.quaternion.clone(),scale:arrow.scale.clone()};setupArrowDebug(arrow);
+ },undefined,e=>console.error("KB arrow load failed",e));
  loader.load("./Bow_256.glb",bg=>{const bow=bg.scene;const bb=new THREE.Box3().setFromObject(bow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.48,desired=target/Math.max(axis,.001);
    if(archerLeftHand){const hs=new THREE.Vector3();archerLeftHand.getWorldScale(hs);bow.scale.set((desired*1.2)/Math.max(hs.x,.001),(desired*1.2)/Math.max(hs.y,.001),(desired*1.2)/Math.max(hs.z,.001));archerLeftHand.add(bow);bow.position.set(0,0,0);bow.rotation.set(THREE.MathUtils.degToRad(101),THREE.MathUtils.degToRad(61),THREE.MathUtils.degToRad(-1))}
    else{bow.scale.setScalar(desired);archer3D.add(bow);bow.position.set(-.25*size.x,.5*size.y,0)}
@@ -217,8 +233,27 @@ function setupArcher3D(){
 function playArcherAttack(){
  if(!archerReady||!archerMixer||!archerAttack)return;if(archerAttacking){archerAttackQueued=true;return}archerAttacking=true;
  const p=archer3D.position.clone(),q=archer3D.quaternion.clone(),idle=archerIdle?archerMixer.clipAction(archerIdle):null,atk=archerMixer.clipAction(archerAttack);
+ const arrow=window.KB_ARCHER_ARROW,hand=window.KB_ARCHER_ARROW_HAND,base=window.KB_ARCHER_ARROW_BASE;
+ let shotRAF=0,shotStart=0;
+ const shoot=()=>{
+  if(!arrow||!hand||!arrow.parent)return;
+  // Reuse the exact same Arrow object: detach while preserving world transform; no clone, geometry, material, texture, or new GLB allocation.
+  const sceneRoot=archer3D.parent;sceneRoot.attach(arrow);arrow.visible=true;
+  const from=new THREE.Vector3();arrow.getWorldPosition(from);
+  // Boss is visually to the right of the actor viewport; fly along screen/world right far enough to reach it.
+  const to=from.clone().add(new THREE.Vector3(6,0,0));
+  shotStart=performance.now();
+  const fly=now=>{const t=Math.min(1,(now-shotStart)/260),e=1-Math.pow(1-t,3);arrow.position.lerpVectors(from,to,e);
+   if(t<1)shotRAF=requestAnimationFrame(fly);else{arrow.visible=false;shotRAF=0}
+  };shotRAF=requestAnimationFrame(fly);
+ };
+ // Fire shortly after Archery Shot 3 begins so release reads as part of the attack.
+ setTimeout(shoot,Math.min(180,Math.max(70,archerAttack.duration*1000*.22)));
  atk.reset().setLoop(THREE.LoopOnce,1);atk.clampWhenFinished=true;if(idle)idle.crossFadeTo(atk,.10,false);atk.play();
- const done=e=>{if(e.action!==atk)return;archerMixer.removeEventListener("finished",done);archer3D.position.copy(p);archer3D.quaternion.copy(q);archerAttacking=false;
+ const done=e=>{if(e.action!==atk)return;archerMixer.removeEventListener("finished",done);if(shotRAF)cancelAnimationFrame(shotRAF);
+  // Return the SAME hidden arrow to RightHand for idle; no disposed/hidden projectile remains in scene.
+  if(arrow&&hand&&base){hand.add(arrow);arrow.position.copy(base.position);arrow.quaternion.copy(base.quaternion);arrow.scale.copy(base.scale);arrow.visible=true}
+  archer3D.position.copy(p);archer3D.quaternion.copy(q);archerAttacking=false;
   if(archerAttackQueued){archerAttackQueued=false;atk.stop();playArcherAttack();return}
   if(idle){atk.crossFadeTo(idle,.10,false);idle.reset().setLoop(THREE.LoopRepeat,Infinity).play()}else atk.stop();
  };archerMixer.addEventListener("finished",done);
@@ -242,7 +277,9 @@ function playSwordAttack(){
  };
  swordMixer.addEventListener("finished",done);
 }
-function draw(){B.innerHTML="";G.forEach((t,i)=>{let b=document.createElement("button");b.type="button";b.className="tile"+(i===Q?" selected":"");b.dataset.i=i;let im=document.createElement("img");setIconInstant(im,icon(t,U[t].l));im.alt=names[t];b.appendChild(im);B.appendChild(b)});$("#totalDamage").textContent=total;$("#bestDamage").textContent=best;if(!$("#units").children.length){$("#units").innerHTML=U.map((u,i)=>'<div class="unit"><div class="icon"'+(i===0?' id="swordsman3d"':i===1?' id="archer3d"':i===3?' id="warrior3d"':'')+'>'+((i===0||i===1||i===3)?'':'<img data-unit="'+i+'" src="'+icon(i,u.l)+'">')+'</div></div>').join("");setupSwordsman3D();setupArcher3D();setupWarrior3D()}else{U.forEach((u,i)=>{if(i===0||i===1||i===3)return;let im=document.querySelector('#units img[data-unit="'+i+'"]');if(im)setIconInstant(im,icon(i,u.l))})}}function find(){let z=new Set(),a=[];for(let r=0;r<N;r++){let s=0;for(let c=1;c<=N;c++){if(c<N&&G[id(r,c)]===G[id(r,s)])continue;if(c-s>=3){let q=[];for(let k=s;k<c;k++){z.add(id(r,k));q.push(id(r,k))}a.push(q)}s=c}}for(let c=0;c<N;c++){let s=0;for(let r=1;r<=N;r++){if(r<N&&G[id(r,c)]===G[id(s,c)])continue;if(r-s>=3){let q=[];for(let k=s;k<r;k++){z.add(id(k,c));q.push(id(k,c))}a.push(q)}s=r}}return{ids:[...z],groups:a}}function pop(e,c){e.classList.remove(c);void e.offsetWidth;e.classList.add(c)}function reward(m,ch){let p=0,C=[0,0,0,0];m.groups.forEach(g=>p+=g.length>=5?10:g.length===4?3:1);p*=ch;m.ids.forEach(i=>C[G[i]]++);C.forEach((n,t)=>{if(!n)return;if(t===0)playSwordAttack();if(t===1)playArcherAttack();if(t===3)playWarriorAttack();U[t].x+=n;while(U[t].l<4&&U[t].x>=need(U[t].l)){U[t].x-=need(U[t].l);U[t].l++}});let d=0;C.forEach((n,t)=>d+=n*(4+U[t].l*3));d=Math.round(d*ch);total+=d;best=Math.max(best,d);$("#scorePop").textContent="+"+p+(ch>1?" COMBO ×"+ch:"");pop($("#scorePop"),"go");$("#damage").textContent="-"+d;pop($("#damage"),"go");draw()}function fall(ids){let x=new Set(ids);for(let c=0;c<N;c++){let k=[];for(let r=N-1;r>=0;r--)if(!x.has(id(r,c)))k.push(G[id(r,c)]);for(let r=N-1,n=0;r>=0;r--,n++)G[id(r,c)]=n<k.length?k[n]:rnd()}}async function resolve(){let ch=1;while(1){let m=find();if(!m.ids.length)break;reward(m,ch);m.ids.forEach(i=>B.children[i]&&B.children[i].classList.add("kill"));await wait(420);fall(m.ids);draw();await wait(130);ch++}}function end(){}async function swap(a,b){if(busy||!near(a,b))return;busy=1;B.children[a]?.classList.add("swap");B.children[b]?.classList.add("swap");await wait(250);[G[a],G[b]]=[G[b],G[a]];draw();await wait(80);if(!find().ids.length){[G[a],G[b]]=[G[b],G[a]];draw();$("#hint").textContent="该交换没有形成三消。";busy=0;return}await resolve();draw();busy=0}function choose(i){if(busy)return;if(Q<0){Q=i;draw()}else if(Q===i){Q=-1;draw()}else if(near(Q,i)){let a=Q;Q=-1;swap(a,i)}else{Q=i;draw()}}function reset(){total=0;best=0;Q=-1;busy=0;U=Array.from({length:4},()=>({l:1,x:0}));$("#hint").textContent="拖动图标，或点击两个相邻图标交换。";make();draw()}preloadIcons();B.addEventListener("click",e=>{let t=e.target.closest(".tile");if(t)choose(+t.dataset.i)});let startX=0,startY=0;
+function draw(){B.innerHTML="";G.forEach((t,i)=>{let b=document.createElement("button");b.type="button";b.className="tile"+(i===Q?" selected":"");b.dataset.i=i;let im=document.createElement("img");setIconInstant(im,icon(t,U[t].l));im.alt=names[t];b.appendChild(im);B.appendChild(b)});$("#totalDamage").textContent=total;$("#bestDamage").textContent=best;if(!$("#units").children.length){$("#units").innerHTML=U.map((u,i)=>'<div class="unit"><div class="icon"'+(i===0?' id="swordsman3d"':i===1?' id="archer3d"':i===3?' id="warrior3d"':'')+'>'+((i===0||i===1||i===3)?'':'<img data-unit="'+i+'" src="'+icon(i,u.l)+'">')+'</div></div>').join("");setupSwordsman3D();setupArcher3D();setupWarrior3D()}else{U.forEach((u,i)=>{if(i===0||i===1||i===3)return;let im=document.querySelector('#units img[data-unit="'+i+'"]');if(im)setIconInstant(im,icon(i,u.l))})}}function find(){let z=new Set(),a=[];for(let r=0;r<N;r++){let s=0;for(let c=1;c<=N;c++){if(c<N&&G[id(r,c)]===G[id(r,s)])continue;if(c-s>=3){let q=[];for(let k=s;k<c;k++){z.add(id(r,k));q.push(id(r,k))}a.push(q)}s=c}}for(let c=0;c<N;c++){let s=0;for(let r=1;r<=N;r++){if(r<N&&G[id(r,c)]===G[id(s,c)])continue;if(r-s>=3){let q=[];for(let k=s;k<r;k++){z.add(id(k,c));q.push(id(k,c))}a.push(q)}s=r}}return{ids:[...z],groups:a}}function pop(e,c){e.classList.remove(c);void e.offsetWidth;e.classList.add(c)}function reward(m,ch){let p=0,C=[0,0,0,0];m.groups.forEach(g=>p+=g.length>=5?10:g.length===4?3:1);p*=ch;m.ids.forEach(i=>C[G[i]]++);C.forEach((n,t)=>{if(!n)return;if(t===0)playSwordAttack();if(t===1)playArcherAttack();if(t===3)playWarriorAttack();U[t].x+=n;while(U[t].l<4&&U[t].x>=need(U[t].l)){U[t].x-=need(U[t].l);U[t].l++}});let d=0;C.forEach((n,t)=>d+=n*(4+U[t].l*3));d=Math.round(d*ch);total+=d;best=Math.max(best,d);$("#scorePop").textContent="+"+p+(ch>1?" COMBO ×"+ch:"");pop($("#scorePop"),"go");$("#damage").textContent="-"+d;pop($("#damage"),"go");draw()}function fall(ids){let x=new Set(ids);for(let c=0;c<N;c++){let k=[];for(let r=N-1;r>=0;r--)if(!x.has(id(r,c)))k.push(G[id(r,c)]);for(let r=N-1,n=0;r>=0;r--,n++)G[id(r,c)]=n<k.length?k[n]:rnd()}}async function resolve(){let ch=1;while(1){let m=find();if(!m.ids.length)break;reward(m,ch);m.ids.forEach(i=>B.children[i]&&B.children[i].classList.add("kill"));await wait(420);fall(m.ids);draw();await wait(130);ch++}}function end(){}async function swap(a,b){if(busy||!near(a,b))return;busy=1;B.children[a]?.classList.add("swap");B.children[b]?.classList.add("swap");await wait(250);[G[a],G[b]]=[G[b],G[a]];draw();await wait(80);if(!find().ids.length){[G[a],G[b]]=[G[b],G[a]];draw();$("#hint").textContent="该交换没有形成三消。";busy=0;return}await resolve();draw();busy=0}function choose(i){if(busy)return;if(Q<0){Q=i;draw()}else if(Q===i){Q=-1;draw()}else if(near(Q,i)){let a=Q;Q=-1;swap(a,i)}else{Q=i;draw()}}function reset(){total=0;best=0;Q=-1;busy=0;U=Array.from({length:4},()=>({l:1,x:0}));$("#hint").textContent="拖动图标，或点击两个相邻图标交换。";make();draw()}const gridToggle=document.querySelector("#gridToggle");
+if(gridToggle){gridToggle.checked=false;document.body.classList.remove("show-grid");gridToggle.addEventListener("change",()=>document.body.classList.toggle("show-grid",gridToggle.checked))}
+preloadIcons();B.addEventListener("click",e=>{let t=e.target.closest(".tile");if(t)choose(+t.dataset.i)});let startX=0,startY=0;
 B.addEventListener("pointerdown",e=>{
  let t=e.target.closest(".tile"); if(!t)return;
  down=+t.dataset.i; startX=e.clientX; startY=e.clientY;
