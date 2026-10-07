@@ -308,13 +308,25 @@ function setupHorse3D(){
    const idleSmooth=new Map();bones.forEach(b=>idleSmooth.set(b,{p:b.position.clone(),q:b.quaternion.clone()}));
    const baseUpdate=knightMixer.update.bind(knightMixer);
    knightMixer.update=dt=>{
-     const step=Math.min(dt,1/60);baseUpdate(step);
+     const step=Math.min(dt,1/60);
+     // Seamless Ride Idle loop: blend the final 0.22s into the opening 0.22s instead of hard-wrapping at clip end.
+     let loopBlend=0;
+     if(!knightAttacking&&knightIdle){
+       const act=knightMixer.clipAction(knightIdle),dur=knightIdle.duration||0;
+       if(dur>0&&act.time>dur-.22)loopBlend=THREE.MathUtils.smoothstep((act.time-(dur-.22))/.22,0,1);
+     }
+     baseUpdate(step);
      if(!knightAttacking){
        const alpha=1-Math.exp(-step*9);
        bones.forEach(b=>{const s=idleSmooth.get(b);if(!s)return;
-         // Reject extreme single-frame translation spikes, then smooth the valid Ride Idle motion.
          if(s.p.distanceTo(b.position)<0.35)s.p.lerp(b.position,alpha);
          s.q.slerp(b.quaternion,alpha);
+         if(loopBlend>0){
+           // Increase damping near the loop seam so the end pose converges gently instead of snapping to frame 0.
+           const seam=1-loopBlend*.72;
+           s.p.lerp(b.position,alpha*seam);
+           s.q.slerp(b.quaternion,alpha*seam);
+         }
          b.position.copy(s.p);b.quaternion.copy(s.q);
        });
      }else{
