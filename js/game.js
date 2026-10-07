@@ -217,7 +217,7 @@ function setupArcher3D(){
  loader.load("./Arrow_256.glb",ag=>{const arrow=ag.scene;const bb=new THREE.Box3().setFromObject(arrow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.42,desired=target/Math.max(axis,.001);
    if(archerRightHand){const hs=new THREE.Vector3();archerRightHand.getWorldScale(hs);arrow.scale.set((desired*1.25)/Math.max(hs.x,.001),(desired*1.25)/Math.max(hs.y,.001),(desired*1.25)/Math.max(hs.z,.001));archerRightHand.add(arrow);arrow.position.set(-0.1,0.37,0.12);arrow.rotation.set(THREE.MathUtils.degToRad(101),0,0)}
    else{arrow.scale.setScalar(desired);archer3D.add(arrow);arrow.position.set(.25*size.x,.5*size.y,0)}
-   arrow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_ARROW=arrow;setupArrowDebug(arrow);
+   arrow.traverse(n=>{if(n.isMesh)n.frustumCulled=false});window.KB_ARCHER_ARROW=arrow;window.KB_ARCHER_ARROW_HAND=archerRightHand;window.KB_ARCHER_ARROW_BASE={position:arrow.position.clone(),quaternion:arrow.quaternion.clone(),scale:arrow.scale.clone()};setupArrowDebug(arrow);
  },undefined,e=>console.error("KB arrow load failed",e));
  loader.load("./Bow_256.glb",bg=>{const bow=bg.scene;const bb=new THREE.Box3().setFromObject(bow),bs=bb.getSize(new THREE.Vector3()),axis=Math.max(bs.x,bs.y,bs.z),target=size.y*.48,desired=target/Math.max(axis,.001);
    if(archerLeftHand){const hs=new THREE.Vector3();archerLeftHand.getWorldScale(hs);bow.scale.set((desired*1.2)/Math.max(hs.x,.001),(desired*1.2)/Math.max(hs.y,.001),(desired*1.2)/Math.max(hs.z,.001));archerLeftHand.add(bow);bow.position.set(0,0,0);bow.rotation.set(THREE.MathUtils.degToRad(101),THREE.MathUtils.degToRad(61),THREE.MathUtils.degToRad(-1))}
@@ -233,8 +233,27 @@ function setupArcher3D(){
 function playArcherAttack(){
  if(!archerReady||!archerMixer||!archerAttack)return;if(archerAttacking){archerAttackQueued=true;return}archerAttacking=true;
  const p=archer3D.position.clone(),q=archer3D.quaternion.clone(),idle=archerIdle?archerMixer.clipAction(archerIdle):null,atk=archerMixer.clipAction(archerAttack);
+ const arrow=window.KB_ARCHER_ARROW,hand=window.KB_ARCHER_ARROW_HAND,base=window.KB_ARCHER_ARROW_BASE;
+ let shotRAF=0,shotStart=0;
+ const shoot=()=>{
+  if(!arrow||!hand||!arrow.parent)return;
+  // Reuse the exact same Arrow object: detach while preserving world transform; no clone, geometry, material, texture, or new GLB allocation.
+  const sceneRoot=archer3D.parent;sceneRoot.attach(arrow);arrow.visible=true;
+  const from=new THREE.Vector3();arrow.getWorldPosition(from);
+  // Boss is visually to the right of the actor viewport; fly along screen/world right far enough to reach it.
+  const to=from.clone().add(new THREE.Vector3(6,0,0));
+  shotStart=performance.now();
+  const fly=now=>{const t=Math.min(1,(now-shotStart)/260),e=1-Math.pow(1-t,3);arrow.position.lerpVectors(from,to,e);
+   if(t<1)shotRAF=requestAnimationFrame(fly);else{arrow.visible=false;shotRAF=0}
+  };shotRAF=requestAnimationFrame(fly);
+ };
+ // Fire shortly after Archery Shot 3 begins so release reads as part of the attack.
+ setTimeout(shoot,Math.min(180,Math.max(70,archerAttack.duration*1000*.22)));
  atk.reset().setLoop(THREE.LoopOnce,1);atk.clampWhenFinished=true;if(idle)idle.crossFadeTo(atk,.10,false);atk.play();
- const done=e=>{if(e.action!==atk)return;archerMixer.removeEventListener("finished",done);archer3D.position.copy(p);archer3D.quaternion.copy(q);archerAttacking=false;
+ const done=e=>{if(e.action!==atk)return;archerMixer.removeEventListener("finished",done);if(shotRAF)cancelAnimationFrame(shotRAF);
+  // Return the SAME hidden arrow to RightHand for idle; no disposed/hidden projectile remains in scene.
+  if(arrow&&hand&&base){hand.add(arrow);arrow.position.copy(base.position);arrow.quaternion.copy(base.quaternion);arrow.scale.copy(base.scale);arrow.visible=true}
+  archer3D.position.copy(p);archer3D.quaternion.copy(q);archerAttacking=false;
   if(archerAttackQueued){archerAttackQueued=false;atk.stop();playArcherAttack();return}
   if(idle){atk.crossFadeTo(idle,.10,false);idle.reset().setLoop(THREE.LoopRepeat,Infinity).play()}else atk.stop();
  };archerMixer.addEventListener("finished",done);
