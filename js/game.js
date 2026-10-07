@@ -293,7 +293,7 @@ function setupHorse3D(){
    const kRightShoulder=bones.find(b=>/(mixamorig:?RightShoulder$|right.*shoulder)/i.test(b.name))||null;const kRightArm=bones.find(b=>/(mixamorig:?RightArm$|right.*upperarm)/i.test(b.name))||null;
    const kRightFore=bones.find(b=>/(mixamorig:?RightForeArm$|right.*forearm)/i.test(b.name))||null;
    const kRightHand=bones.find(b=>/(mixamorig:?RightHand$|right.*hand)/i.test(b.name))||null;
-   const thrustCfg={name:"Mounted_Shoulder_Attack_v2",duration:.72,shoulderRX:0,shoulderRY:-18,shoulderRZ:10,armRX:-6,armRY:-12,armRZ:-4,foreRX:-8,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0};
+   const thrustCfg={name:"Mounted_Shoulder_Attack_v2",duration:.93,shoulderRX:0,shoulderRY:28,shoulderRZ:30,armRX:-6,armRY:-12,armRZ:-4,foreRX:-8,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0};
    knightThrust={cfg:thrustCfg,active:false,t:0,shoulder:kRightShoulder,arm:kRightArm,fore:kRightFore,hand:kRightHand};
    window.KB_KNIGHT_THRUST=knightThrust;
    const ap=document.createElement("div");ap.id="knightAttackDebug";ap.innerHTML='<b>Mounted_Shoulder_Attack_v2</b>'+["duration","shoulderRX","shoulderRY","shoulderRZ","armRX","armRY","armRZ","foreRX","foreRY","foreRZ","handRX","handRY","handRZ"].map(k=>'<label>'+k+' <input data-k="'+k+'" type="range" min="'+(k==="duration"?".3":k==="reach"?"-.5":"-90")+'" max="'+(k==="duration"?"1.5":k==="reach"?".5":"90")+'" step="'+(k==="duration"||k==="reach"?".01":"1")+'" value="'+thrustCfg[k]+'"><output>'+thrustCfg[k]+'</output></label>').join("")+'<div><button id="katPlay">Play Attack</button><button id="katCopy">Copy Values</button></div><pre id="katOut"></pre>';document.body.appendChild(ap);
@@ -302,7 +302,7 @@ function setupHorse3D(){
      const reset=document.createElement("button");reset.type="button";reset.className="katSliderReset";reset.textContent="↺";reset.title="Reset "+i.dataset.k;
      out.insertAdjacentElement("afterend",reset);
      i.oninput=()=>{thrustCfg[i.dataset.k]=+i.value;out.value=i.value};
-     reset.onclick=()=>{const k=i.dataset.k,defaults={duration:.72,shoulderRX:0,shoulderRY:-18,shoulderRZ:10,armRX:-6,armRY:-12,armRZ:-4,foreRX:-8,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0};thrustCfg[k]=defaults[k];i.value=defaults[k];out.value=defaults[k]};
+     reset.onclick=()=>{const k=i.dataset.k,defaults={duration:.93,shoulderRX:0,shoulderRY:28,shoulderRZ:30,armRX:-6,armRY:-12,armRZ:-4,foreRX:-8,foreRY:0,foreRZ:0,handRX:0,handRY:0,handRZ:0};thrustCfg[k]=defaults[k];i.value=defaults[k];out.value=defaults[k]};
    });
    ap.querySelector("#katPlay").onclick=()=>playKnightAttack();ap.querySelector("#katCopy").onclick=()=>{const txt="Knight Attack "+JSON.stringify(thrustCfg);ap.querySelector("#katOut").textContent=txt;navigator.clipboard?.writeText(txt)};
    const bd={boneIndex:0,rx:0,ry:0,rz:0};window.KB_KNIGHT_BONE_DEBUG=bd;
